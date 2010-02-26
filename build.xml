@@ -13,7 +13,7 @@
         <pathelement path="tmp/testclasses"/>
     </path>
 
-		<target name="test" depends="compile,test-run" />
+		<target name="test" depends="build,test-run" />
 		<target name="test-run">
 		    <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
 				      <classpath refid="project.classpath"/>

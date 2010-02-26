@@ -72,16 +72,17 @@ private[mvc] trait ScalateProvider  {
     // try to fill context
     for (o <-args) {
       for (name <-LocalVariablesNamesTracer.getAllLocalVariableNames(o).iterator) {
-        context.attributes += name -> o
+        context.attributes(name) = o
         lb += Binding(name,SourceCodeHelper.name(o.getClass))
       }
     }
-    context.attributes += "session" -> Scope.Session.current.get
-    context.attributes += "request" -> Http.Request.current.get
-    context.attributes += "flash" -> Scope.Flash.current()
-    context.attributes += "params" ->  Scope.Params.current.get
+    context.attributes("session") = Scope.Session.current.get
+    context.attributes("request") = Http.Request.current.get
+    context.attributes("flash") = Scope.Flash.current()
+    context.attributes("params") =  Scope.Params.current.get
+    //context.layout("/default."+ renderMode)
     try {
-       context.attributes +="errors" -> Validation.errors()
+       context.attributes("errors") = Validation.errors()
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
     
     try {

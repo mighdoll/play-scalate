@@ -7,7 +7,7 @@ if play_command == 'new':
     shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
     shutil.copyfile(os.path.join(module_dir,'resources/index.ssp'), os.path.join(application_path, 'app/views/Application/index.ssp'))
     f = open(os.path.join(application_path, 'conf/application.conf'),'a')
-    f.write('\n\n#scalate config\nscalate=ssp\njvm.memory=-Xmx256M,-Xms32M')
+    f.write('\n\n#scalate config\nscalate=ssp\njvm.memory=-Xmx256M -Xms32M')
     f.close()
     os.remove(os.path.join(application_path, 'app/views/Application/index.html'))
     os.remove(os.path.join(application_path, 'app/views/main.html'))

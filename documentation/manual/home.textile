@@ -1,6 +1,6 @@
 h1. Scalate support
 
-"Scalate":http://scalate.fusesource.org/ is a template engine written in scala. It supports two dialects: ssp (jsp for scala) and shaml (haml for scala). Play provides integration for both via a special Controller class. 
+"Scalate":http://scalate.fusesource.org/ is a template engine written in scala. It supports two dialects: ssp (jsp for scala) and scaml (haml for scala). Play provides integration for both via a special Controller class. 
 
 h2. Getting started
 
@@ -28,7 +28,7 @@ bc. scalate=ssp
 
 or 
 
-bc. scalate=shaml
+bc. scalate=scaml
 
 then you will also need to increase the heap size:
 
