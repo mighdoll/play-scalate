@@ -10,17 +10,13 @@ import scala.collection.JavaConversions._
 import java.io.File
 import org.fusesource.scalate.util.SourceCodeHelper
 
-
 private[mvc] trait ScalateProvider  {
 
   def init:TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
-      Binding("session", SourceCodeHelper.name(classOf[Scope.Session])),
-      Binding("request", SourceCodeHelper.name(classOf[Http.Request])),
-      Binding("flash", SourceCodeHelper.name(classOf[Scope.Flash])),
-      Binding("params", SourceCodeHelper.name(classOf[Scope.Params]))
+      Binding("playcontext", SourceCodeHelper.name(PlayContext.getClass), true)
     )
     if (Play.mode == Play.Mode.PROD) {
       engine.workingDirectory = new File(System.getProperty("java.io.tmpdir"), "scalate")
@@ -79,10 +75,7 @@ private[mvc] trait ScalateProvider  {
         lb += Binding(name,SourceCodeHelper.name(o.getClass))
       }
     }
-    context.attributes("session") = Scope.Session.current.get
-    context.attributes("request") = Http.Request.current.get
-    context.attributes("flash") = Scope.Flash.current()
-    context.attributes("params") =  Scope.Params.current.get
+    context.attributes("playcontext") = PlayContext
     context.attributes("layout")="/default."+ renderMode
     try {
        context.attributes("errors") = Validation.errors()

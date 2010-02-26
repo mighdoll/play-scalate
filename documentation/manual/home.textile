@@ -59,14 +59,18 @@ h2. Difference between production and dev mode
 in dev mode, play will alow instant template reloading, that is, if you make a change to a template and refresh the page, the change will apear. In production, however, template reloading is disabled for performance reasons.
 
 
+h2. layout
+
+scalate now supports "layouts, partials":http://scalate.fusesource.org/documentation/scalate-user-guide.html#layouts as well. Play stores default layouts in app/views/default.ssp (or app/views/default.scaml). 
+
 
 h2. Reverse URL
 
-bc. <%= play.mvc.Tags.url("Application.index") %>
+bc. <%= url("Application.index") %>
 
 this will give back the index page 
 
-bc. <%= play.mvc.Tags.url("Application.something", Map("id"->5)) %>
+bc. <%= url("Application.something", Map("id"->5)) %>
 
 this will resolve method "Application#something" with argument "id" 
 
