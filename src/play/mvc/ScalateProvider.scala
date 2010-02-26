@@ -17,6 +17,7 @@ private[mvc] trait ScalateProvider  {
     val engine = new TemplateEngine
     engine.workingDirectory = new File(System.getProperty("java.io.tmpdir"), "scalate")
     engine.bindings = List(
+      Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
       Binding("session", SourceCodeHelper.name(classOf[Scope.Session])),
       Binding("request", SourceCodeHelper.name(classOf[Http.Request])),
       Binding("flash", SourceCodeHelper.name(classOf[Scope.Flash])),
