@@ -15,7 +15,6 @@ private[mvc] trait ScalateProvider  {
 
   def init:TemplateEngine = {
     val engine = new TemplateEngine
-    engine.workingDirectory = new File(System.getProperty("java.io.tmpdir"), "scalate")
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
       Binding("session", SourceCodeHelper.name(classOf[Scope.Session])),
@@ -24,7 +23,10 @@ private[mvc] trait ScalateProvider  {
       Binding("params", SourceCodeHelper.name(classOf[Scope.Params]))
     )
     if (Play.mode == Play.Mode.PROD) {
+      engine.workingDirectory = new File(System.getProperty("java.io.tmpdir"), "scalate")
       engine.allowReload = false
+    } else {
+      engine.workingDirectory = new File(Play.applicationPath+"/tmp", "scalate")
     }
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine
@@ -36,8 +38,8 @@ private[mvc] trait ScalateProvider  {
     //determine template
     val templateName:String =
         if (args.length > 0 && args(0).isInstanceOf[String] && 
-            LocalVariablesNamesTracer.getAllLocalVariableNames(args(0)).isEmpty) {
-            discardLeadingAt(args(0).toString)
+          LocalVariablesNamesTracer.getAllLocalVariableNames(args(0)).isEmpty) {
+          discardLeadingAt(args(0).toString)
         } else {
           determineURI()
         }
