@@ -80,7 +80,7 @@ private[mvc] trait ScalateProvider  {
     context.attributes("request") = Http.Request.current.get
     context.attributes("flash") = Scope.Flash.current()
     context.attributes("params") =  Scope.Params.current.get
-    //context.layout("/default."+ renderMode)
+    context.attributes("layout")="/default."+ renderMode
     try {
        context.attributes("errors") = Validation.errors()
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
@@ -88,7 +88,7 @@ private[mvc] trait ScalateProvider  {
     try {
           val templatePath = templateName.replaceAll(".html","."+renderMode)
           val template = engine.load(templatePath, lb.toList)
-          template.render(context)
+          engine.layout(template, context)
           throw new ScalateResult(buffer.toString,templateName)
     } catch { 
         case ex:TemplateNotFoundException => {
