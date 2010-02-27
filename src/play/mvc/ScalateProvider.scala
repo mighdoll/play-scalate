@@ -12,24 +12,29 @@ import org.fusesource.scalate.util.SourceCodeHelper
 
 private[mvc] trait ScalateProvider  {
 
-  def init:TemplateEngine = {
+  // Create and configure the Scalate template engine
+  def initEngine(useStandardWorkdir:Boolean = false ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
       Binding("playcontext", SourceCodeHelper.name(PlayContext.getClass), true)
     )
-    if (Play.mode == Play.Mode.PROD) {
-      engine.workingDirectory = new File(System.getProperty("java.io.tmpdir"), "scalate")
-      engine.allowReload = false
-    } else {
-      engine.workingDirectory = new File(Play.applicationPath+"/tmp", "scalate")
-    }
+    if (Play.mode == Play.Mode.PROD) engine.allowReload = false
+
+    engine.workingDirectory = if (Play.mode == Play.Mode.PROD && !useStandardWorkdir ) 
+        new File(System.getProperty("java.io.tmpdir"), "scalate")
+     else 
+       new File(Play.applicationPath+"/tmp/classes")
+   
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine
   }
-  val engine = init
-  // Create and configure the Scalate template engine
-  
+  val engine = initEngine()
+  def defaultTemplate = Http.Request.current().action
+  def requestFormat = Http.Request.current().format 
+  def controller = Http.Request.current().controller
+  def validationErrors = Validation.errors
+
   def renderOrProvideTemplate(args:Seq[AnyRef]):Option[String] = {
     //determine template
     val templateName:String =
@@ -39,7 +44,6 @@ private[mvc] trait ScalateProvider  {
         } else {
           determineURI()
         }
-
     if (shouldRenderWithScalate(templateName)) {
       renderScalateTemplate(templateName,args)
       None
@@ -78,7 +82,7 @@ private[mvc] trait ScalateProvider  {
     context.attributes("playcontext") = PlayContext
     context.attributes("layout")="/default."+ renderMode
     try {
-       context.attributes("errors") = Validation.errors()
+       context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
     
     try {
@@ -104,15 +108,15 @@ private[mvc] trait ScalateProvider  {
   def discardLeadingAt(templateName:String):String = {
         if(templateName.startsWith("@")) {
             if(!templateName.contains(".")) {
-                determineURI(Http.Request.current().controller + "." + templateName.substring(1))
+                determineURI(controller + "." + templateName.substring(1))
             }
             determineURI(templateName.substring(1))
         } else templateName
   }
 
-  def determineURI(template:String = Http.Request.current().action):String = {
+  def determineURI(template:String = defaultTemplate):String = {
      template.replace(".", "/") + "." + 
-     (if (Http.Request.current().format == null)  "html" else Http.Request.current().format)
+     (if (requestFormat == null)  "html" else requestFormat)
   }
 }
 private[mvc] object ScalateProvider extends ScalateProvider

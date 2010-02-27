@@ -15,10 +15,11 @@ then if you start a new project all you need to do is:
 
 bc. play new myapp --with scala,scalate
 
+p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
 h3. Existing Projects
 
-or if you want to configure an existing project, you will need to edit your conf/application.conf:
+or if you want to configure an existing scala project, you will need to edit your conf/application.conf:
 
 bc. module.scalate=${play.path}/modules/scalate-head
 
@@ -74,3 +75,10 @@ bc. <%= url("Application.something", Map("id"->5)) %>
 
 this will resolve method "Application#something" with argument "id" 
 
+bc. <%= absoluteurl("Application.index") %>
+
+this will resolve the full url
+
+bc. <%= staticurl("/public/images/favicon.png") %>
+
+this will resolve the full url for the favicon asset.

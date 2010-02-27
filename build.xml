@@ -11,9 +11,10 @@
             <include name="*.jar"/>                        
         </fileset> 
         <pathelement path="tmp/testclasses"/>
+        <pathelement path="tmp/classes"/>
     </path>
 
-		<target name="test" depends="build,test-run" />
+		<target name="test" depends="clean,build,test-run" />
 		<target name="test-run">
 		    <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
 				      <classpath refid="project.classpath"/>
@@ -21,10 +22,13 @@
 				<scalatest runpath="tmp/testclasses"  haltonfailure="true" />
 		</target>
 
-    <target name="build" depends="compile"> 
+    <target name="clean"> 
         <delete dir="tmp" />
+        <delete dir="samples-and-tests/simpleapp/tmp" />
+        <delete file="lib/play-scalate.jar" />
 		</target>
-    <target name="compile">
+
+    <target name="build">
         <taskdef resource="scala/tools/ant/antlib.xml">
             <classpath refid="project.classpath" />
         </taskdef>
