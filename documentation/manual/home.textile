@@ -2,7 +2,7 @@ h1. Scalate support
 
 "Scalate":http://scalate.fusesource.org/ is a template engine written in scala. It supports two dialects: ssp (jsp for scala) and scaml (haml for scala). Play provides integration for both via a special Controller class. 
 
-h2. Getting started
+h3. Getting started
 
 first you need to grab the release from the modules repository:
 
@@ -33,18 +33,15 @@ bc. scalate=scaml
 
 then you will also need to increase the heap size:
 
-bc. jvm.memory=-Xmx256M,-Xms32M
+bc. jvm.memory=-Xmx256M -Xms32M
 
 finally you will need to change your controllers to inherit from play.mvc.ScalateController
 
-
-
-h2. Example
+h3. Example
 
 bc. object Application extends ScalateController  {
     def index(name: String = "Guest user") = renderScalate(name)
 }
-
 
 if the method above is invoked, play will render app/views/Application/index.ssp with the following context variables already populated:
 * name
@@ -53,19 +50,15 @@ if the method above is invoked, play will render app/views/Application/index.ssp
 * session
 * parameters
 
-
-
-h2. Difference between production and dev mode
+h3. Difference between production and dev mode
 
 in dev mode, play will alow instant template reloading, that is, if you make a change to a template and refresh the page, the change will apear. In production, however, template reloading is disabled for performance reasons.
 
-
-h2. layout
+h3. layout
 
 scalate now supports "layouts, partials":http://scalate.fusesource.org/documentation/scalate-user-guide.html#layouts as well. Play stores default layouts in app/views/default.ssp (or app/views/default.scaml). 
 
-
-h2. Reverse URL
+h3. Reverse URL
 
 bc. <%= url("Application.index") %>
 
