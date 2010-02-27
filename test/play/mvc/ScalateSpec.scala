@@ -14,7 +14,6 @@ class ScalateDummy extends ScalateProvider {
 }
 
 class ScalateSpec extends FlatSpec with ShouldMatchers {
-   val settings = new Settings() 
    Play.applicationPath=new File((new File(".")).getCanonicalPath+"/samples-and-tests/simpleapp")
    val prop = new Properties
    prop.load(new FileInputStream((new File(".")).getCanonicalPath+"/samples-and-tests/simpleapp/conf/application.conf"))
@@ -22,6 +21,9 @@ class ScalateSpec extends FlatSpec with ShouldMatchers {
      
    "A scalate template" should "render" in {
      val provider = new ScalateDummy
-     provider.renderOrProvideTemplate(Array[AnyRef]())
+     try {
+      provider.renderOrProvideTemplate(Array[AnyRef]())
+     } catch {case res:ScalateResult => 
+     }  
    }
 }
