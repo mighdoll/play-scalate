@@ -6,14 +6,16 @@ h3. Getting started
 
 first you need to grab the release from the modules repository:
 
-bc. play install scalate
+bc. play install scalate-0.1
 
 
 h3. Starting a New Project
 
 then if you start a new project all you need to do is:
 
-bc. play new myapp --with scala-0.1,scalate-0.1
+bc. play new myapp --with scala,scalate
+
+(if you have any other version installed from scala or scalate then 0.1, then you will need to explicitly reference both ie. --with scalate-0.1,scala-01)
 
 p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
