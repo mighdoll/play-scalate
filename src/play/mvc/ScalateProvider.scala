@@ -9,6 +9,7 @@ import java.io.{StringWriter,PrintWriter}
 import scala.collection.JavaConversions._
 import java.io.File
 import org.fusesource.scalate.util.SourceCodeHelper
+import play.vfs.{VirtualFile => VFS}
 
 private[mvc] trait ScalateProvider  {
 
@@ -65,7 +66,11 @@ private[mvc] trait ScalateProvider  {
 
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
-    val renderMode = Play.configuration.getProperty("scalate") 
+    val renderMode = Play.configuration.getProperty("scalate")
+    val otherMode = renderMode match {
+      case "ssp" => "scaml"
+      case "scaml" => "ssp"
+    }
     //loading template
     val lb = new scala.collection.mutable.ListBuffer[Binding]
     val buffer = new StringWriter()
@@ -80,13 +85,33 @@ private[mvc] trait ScalateProvider  {
       }
     }
     context.attributes("playcontext") = PlayContext
-    context.attributes("layout")="/default."+ renderMode
+    
+    // add the default layout to the context if it exists
+    context.attributes("layout") = VFS.search(Play.templatesPath, "/default." + renderMode) match {
+      case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
+          case null => ""
+          case f: VFS if f.exists() => "/default." + otherMode
+          case f: VFS if !f.exists() => ""
+        }
+      case f: VFS if f.exists() => "/default." + renderMode
+      case f: VFS if !f.exists() => ""
+    }
+    
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
     
     try {
-          val templatePath = templateName.replaceAll(".html","."+renderMode)
+          val baseName = templateName.replaceAll(".html", "")
+          val templatePath = VFS.search(Play.templatesPath, baseName + "." + renderMode) match {
+            case null => VFS.search(Play.templatesPath, baseName + "." + otherMode) match {
+              case null => ""
+              case f: VFS if f.exists() => baseName + "." + otherMode
+              case f: VFS if !f.exists() => ""
+            }
+            case f: VFS if f.exists() => baseName + "." + renderMode
+            case f: VFS if !f.exists() => ""
+          }
           val template = engine.load(templatePath, lb.toList)
           engine.layout(template, context)
           throw new ScalateResult(buffer.toString,templateName)
