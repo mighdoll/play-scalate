@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <%@ var body: String %>
 <%@ var title: String = "Some Default Title" %>
-<% import play.mvc.Tags._ %>
 <html>
 <head>
   <title>${title}</title>

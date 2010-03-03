@@ -13,7 +13,7 @@ h3. Starting a New Project
 
 then if you start a new project all you need to do is:
 
-bc. play new myapp --with scala,scalate
+bc. play new myapp --with scala-0.1,scalate-0.1
 
 p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
@@ -21,7 +21,7 @@ h3. Existing Projects
 
 or if you want to configure an existing scala project, you will need to edit your conf/application.conf:
 
-bc. module.scalate=${play.path}/modules/scalate-head
+bc. module.scalate=${play.path}/modules/scalate-0.1
 
 and set the dialect:
 
