@@ -25,7 +25,7 @@
     <target name="clean"> 
         <delete dir="tmp" />
         <delete dir="samples-and-tests/simpleapp/tmp" />
-        <delete file="lib/play-scalate.jar" />
+				<delete> <fileset dir="lib" includes="play-scalate*.jar"/> </delete>
 		</target>
 
     <target name="build">

@@ -13,7 +13,7 @@ import org.fusesource.scalate.util.SourceCodeHelper
 private[mvc] trait ScalateProvider  {
 
   // Create and configure the Scalate template engine
-  def initEngine(useStandardWorkdir:Boolean = false ):TemplateEngine = {
+  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
@@ -24,9 +24,12 @@ private[mvc] trait ScalateProvider  {
     engine.workingDirectory = if (Play.mode == Play.Mode.PROD && !useStandardWorkdir ) 
         new File(System.getProperty("java.io.tmpdir"), "scalate")
      else 
-       new File(Play.applicationPath+"/tmp/classes")
+       new File(Play.applicationPath,"/tmp")
    
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
+    engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
+    engine.combinedClassPath = true
+    if (usePlayClassloader) engine.classLoader = Play.classloader
     engine
   }
   val engine = initEngine()
