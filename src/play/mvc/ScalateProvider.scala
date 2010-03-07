@@ -89,6 +89,10 @@ private[mvc] trait ScalateProvider  {
     }
     context.attributes("playcontext") = PlayContext
     
+    if (templateBinding != null && templateBinding.data != null) {
+      for (pair <- templateBinding.data) context.attributes(pair._1) = pair._2
+    }
+    
     // add the default layout to the context if it exists
     context.attributes("layout") = VFS.search(Play.templatesPath, "/default." + renderMode) match {
       case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
