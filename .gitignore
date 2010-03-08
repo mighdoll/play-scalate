@@ -1,4 +1,4 @@
-lib/play-scalate.jar
+lib/play-scalate*.jar
 .DS_Store
 test-result
 tmp

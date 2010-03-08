@@ -2,7 +2,10 @@ package play.mvc
 import play.Play
 import scala.collection.JavaConversions._
 
+object Utils extends play.utils.Utils
+
 private[mvc] object PlayContext {
+   def utils  = Utils
    def session = Scope.Session.current()
    def request = Http.Request.current()
    def flash = Scope.Flash.current()

@@ -37,6 +37,7 @@ private[mvc] trait ScalateProvider  {
   def requestFormat = Http.Request.current().format 
   def controller = Http.Request.current().controller
   def validationErrors = Validation.errors
+  def preCompedContextName = if (Play.configuration.containsKey("scalate.precompile.name")) Play.configuration.getProperty("scalate.precompile.name") else "x"
 
   def renderOrProvideTemplate(args:Seq[AnyRef]):Option[String] = {
     //determine template
@@ -68,6 +69,9 @@ private[mvc] trait ScalateProvider  {
 
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
+    // TODO for some reason scala 2.8 compiler throws a nasty error message if it's set to a normal Map
+    // this should be investigated further
+    var precompiledContext = new scala.collection.mutable.HashMap[String,AnyRef]()
     val renderMode = Play.configuration.getProperty("scalate") 
     //loading template
     val lb = new scala.collection.mutable.ListBuffer[Binding]
@@ -78,9 +82,21 @@ private[mvc] trait ScalateProvider  {
     // try to fill context
     for (o <-args) {
       for (name <-LocalVariablesNamesTracer.getAllLocalVariableNames(o).iterator) {
-        context.attributes(name) = o
-        lb += Binding(name,SourceCodeHelper.name(o.getClass))
-      }
+        if (Play.configuration.containsKey("scalate.precompile")) {
+          precompiledContext += name->o
+        } else { 
+          context.attributes(name) = o
+          if (name.endsWith("list")) {
+            lb += Binding(name, "List[models."+name.replace("list","").capitalize+"]")
+          } else { 
+            lb += Binding(name, SourceCodeHelper.name(o.getClass)) 
+          }
+        }
+       }
+    }
+    if (Play.configuration.containsKey("scalate.precompile")) {
+      context.attributes(preCompedContextName) = precompiledContext
+      lb += Binding(preCompedContextName, "scala.collection.mutable.HashMap[String,AnyRef]")
     }
     context.attributes("playcontext") = PlayContext
     context.attributes("layout")="/default."+ renderMode
