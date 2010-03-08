@@ -51,6 +51,15 @@ if the method above is invoked, play will render app/views/Application/index.ssp
 * flash
 * session
 * parameters
+* utils (play.mvc.Utils)
+
+h3. Convension based access to Lists of Models
+
+It's a common task to pass a list of models to templates, unfortunately, by the time scalate gets back the variable list, the generic types are already gone (due to type erasure), therefore the only type scalate can cast variable in templates is List[AnyRef]. To work around this, the scalate module applies the following naming convention: any variable that is passed to the template which ends with "list" will be cast to List[models.<firt part of the variable name>] (ie a variable called "userlist" will be cast as "List[models.User]").
+
+h3. precompile templates
+
+coming soon
 
 h3. Difference between production and dev mode
 
