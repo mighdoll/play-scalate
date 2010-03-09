@@ -14,7 +14,7 @@ import play.vfs.{VirtualFile => VFS}
 private[mvc] trait ScalateProvider  {
 
   // Create and configure the Scalate template engine
-  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true ):TemplateEngine = {
+  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._" ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
@@ -30,6 +30,7 @@ private[mvc] trait ScalateProvider  {
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
     engine.combinedClassPath = true
+    engine.customImports = customImports
     if (usePlayClassloader) engine.classLoader = Play.classloader
     engine
   }
@@ -38,7 +39,6 @@ private[mvc] trait ScalateProvider  {
   def requestFormat = Http.Request.current().format 
   def controller = Http.Request.current().controller
   def validationErrors = Validation.errors
-  def preCompedContextName = if (Play.configuration.containsKey("scalate.precompile.name")) Play.configuration.getProperty("scalate.precompile.name") else "x"
 
   def renderOrProvideTemplate(args:Seq[AnyRef]):Option[String] = {
     //determine template
@@ -68,6 +68,20 @@ private[mvc] trait ScalateProvider  {
     } else false 
   }
 
+  def precompileTemplates = {
+    //do it for each template
+    // for (file <- VFS.list() if ( !(file.contains("default.ssp) || file.contains("default.scaml")) && (default.(file.contains (".ssp") || file.contains(".scaml"))) ) ) 
+    val buffer = new StringWriter()
+    var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
+    //set layout
+    context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
+    // open file & try to find context variables and set them
+    // populate playcotext
+    context.attributes("playcontext") = PlayContext
+    //val template = engine.load(file)
+    //engine.layout(template, context)
+  }
+
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
     val renderMode = Play.configuration.getProperty("scalate")
@@ -76,35 +90,25 @@ private[mvc] trait ScalateProvider  {
       case "scaml" => "ssp"
     }
     //loading template
-    val lb = new scala.collection.mutable.ListBuffer[Binding]
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
-    val templateBinding = Scope.RenderArgs.current()
-    
-    // try to fill context
+    val renderArgs = Scope.RenderArgs.current()
+     // try to fill context
     for (o <-args) {
-      for (name <-LocalVariablesNamesTracer.getAllLocalVariableNames(o).iterator) {
-        context.attributes(name) = o
-        lb += Binding(name,SourceCodeHelper.name(o.getClass))
-      }
-    }
+        for (name <-LocalVariablesNamesTracer.getAllLocalVariableNames(o).iterator) {
+           context.attributes(name) = o
+        }   
+    }        
     context.attributes("playcontext") = PlayContext
-    
-    if (templateBinding != null && templateBinding.data != null) {
-      for (pair <- templateBinding.data) context.attributes(pair._1) = pair._2
+
+    // now add renderArgs as well
+    if (renderArgs != null && renderArgs.data != null) {
+      for (pair <- renderArgs.data) context.attributes(pair._1) = pair._2
     }
     
     // add the default layout to the context if it exists
-    context.attributes("layout") = VFS.search(Play.templatesPath, "/default." + renderMode) match {
-      case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
-          case null => ""
-          case f: VFS if f.exists() => "/default." + otherMode
-          case f: VFS if !f.exists() => ""
-        }
-      case f: VFS if f.exists() => "/default." + renderMode
-      case f: VFS if !f.exists() => ""
-    }
-    
+    context.attributes("layout") = locateLayout(renderMode,otherMode) 
+
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
@@ -120,7 +124,7 @@ private[mvc] trait ScalateProvider  {
             case f: VFS if f.exists() => baseName + "." + renderMode
             case f: VFS if !f.exists() => ""
           }
-          val template = engine.load(templatePath, lb.toList)
+          val template = engine.load(templatePath)
           engine.layout(template, context)
           throw new ScalateResult(buffer.toString,templateName)
     } catch { 
@@ -151,6 +155,18 @@ private[mvc] trait ScalateProvider  {
      template.replace(".", "/") + "." + 
      (if (requestFormat == null)  "html" else requestFormat)
   }
+
+private[mvc] def locateLayout(renderMode: String, otherMode: String="" ):String =  
+  VFS.search(Play.templatesPath, "/default." + renderMode) match {
+      case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
+          case null => ""
+          case f: VFS if f.exists() => "/default." + otherMode
+          case f: VFS if !f.exists() => ""
+        }
+      case f: VFS if f.exists() => "/default." + renderMode
+      case f: VFS if !f.exists() => ""
+    }
+
 }
 private[mvc] object ScalateProvider extends ScalateProvider
 

@@ -13,7 +13,7 @@ class ScalateDummy extends ScalateProvider {
   override def requestFormat = "html"
   override def controller = "Application"
   override def validationErrors = null
-  override val engine = initEngine(false,false)
+  override val engine = initEngine(false,false,"")
 }
 
 class ScalateSpec extends FlatSpec with ShouldMatchers {

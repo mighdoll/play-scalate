@@ -6,7 +6,7 @@ h3. Getting started
 
 first you need to grab the release from the modules repository:
 
-bc. play install scalate-0.1
+bc. play install scalate-0.2
 
 
 h3. Starting a New Project
@@ -15,7 +15,7 @@ then if you start a new project all you need to do is:
 
 bc. play new myapp --with scala,scalate
 
-(if you have any other version installed from scala or scalate than 0.1, then you will need to explicitly reference both ie. --with scalate-0.1,scala-01)
+(if you have any other version installed from scala or scalate than 0.1, then you will need to explicitly reference both ie. --with scalate-0.2,scala-0.1)
 
 p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
@@ -42,7 +42,7 @@ finally you will need to change your controllers to inherit from play.mvc.Scalat
 h3. Example
 
 bc. object Application extends ScalateController  {
-    def index(name: String = "Guest user") = renderScalate(name)
+    def index(name: String = "Guest user") = renderScalate(name)  //renderArgs("name",name) also works
 }
 
 if the method above is invoked, play will render app/views/Application/index.ssp with the following context variables already populated:
@@ -53,9 +53,11 @@ if the method above is invoked, play will render app/views/Application/index.ssp
 * parameters
 * utils (play.mvc.Utils)
 
-h3. Convension based access to Lists of Models
+the corresponding template will look like this:
 
-It's a common task to pass a list of models to templates, unfortunately, by the time scalate gets back the variable list, the generic types are already gone (due to type erasure), therefore the only type scalate can cast variable in templates is List[AnyRef]. To work around this, the scalate module applies the following naming convention: any variable that is passed to the template which ends with "list" will be cast to List[models.<firt part of the variable name>] (ie a variable called "userlist" will be cast as "List[models.User]").
+bc. <%@ var name: String %>
+Hello ${name}
+
 
 h3. precompile templates
 
