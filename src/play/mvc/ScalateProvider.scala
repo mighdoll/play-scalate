@@ -9,6 +9,7 @@ import java.io.{StringWriter,PrintWriter}
 import scala.collection.JavaConversions._
 import java.io.File
 import org.fusesource.scalate.util.SourceCodeHelper
+import play.vfs.{VirtualFile => VFS}
 
 private[mvc] trait ScalateProvider  {
 
@@ -69,10 +70,11 @@ private[mvc] trait ScalateProvider  {
 
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
-    // TODO for some reason scala 2.8 compiler throws a nasty error message if it's set to a normal Map
-    // this should be investigated further
-    var precompiledContext = new scala.collection.mutable.HashMap[String,AnyRef]()
-    val renderMode = Play.configuration.getProperty("scalate") 
+    val renderMode = Play.configuration.getProperty("scalate")
+    val otherMode = renderMode match {
+      case "ssp" => "scaml"
+      case "scaml" => "ssp"
+    }
     //loading template
     val lb = new scala.collection.mutable.ListBuffer[Binding]
     val buffer = new StringWriter()
@@ -82,30 +84,42 @@ private[mvc] trait ScalateProvider  {
     // try to fill context
     for (o <-args) {
       for (name <-LocalVariablesNamesTracer.getAllLocalVariableNames(o).iterator) {
-        if (Play.configuration.containsKey("scalate.precompile")) {
-          precompiledContext += name->o
-        } else { 
-          context.attributes(name) = o
-          if (name.endsWith("list")) {
-            lb += Binding(name, "List[models."+name.replace("list","").capitalize+"]")
-          } else { 
-            lb += Binding(name, SourceCodeHelper.name(o.getClass)) 
-          }
-        }
-       }
-    }
-    if (Play.configuration.containsKey("scalate.precompile")) {
-      context.attributes(preCompedContextName) = precompiledContext
-      lb += Binding(preCompedContextName, "scala.collection.mutable.HashMap[String,AnyRef]")
+        context.attributes(name) = o
+        lb += Binding(name,SourceCodeHelper.name(o.getClass))
+      }
     }
     context.attributes("playcontext") = PlayContext
-    context.attributes("layout")="/default."+ renderMode
+    
+    if (templateBinding != null && templateBinding.data != null) {
+      for (pair <- templateBinding.data) context.attributes(pair._1) = pair._2
+    }
+    
+    // add the default layout to the context if it exists
+    context.attributes("layout") = VFS.search(Play.templatesPath, "/default." + renderMode) match {
+      case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
+          case null => ""
+          case f: VFS if f.exists() => "/default." + otherMode
+          case f: VFS if !f.exists() => ""
+        }
+      case f: VFS if f.exists() => "/default." + renderMode
+      case f: VFS if !f.exists() => ""
+    }
+    
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
     
     try {
-          val templatePath = templateName.replaceAll(".html","."+renderMode)
+          val baseName = templateName.replaceAll(".html", "")
+          val templatePath = VFS.search(Play.templatesPath, baseName + "." + renderMode) match {
+            case null => VFS.search(Play.templatesPath, baseName + "." + otherMode) match {
+              case null => ""
+              case f: VFS if f.exists() => baseName + "." + otherMode
+              case f: VFS if !f.exists() => ""
+            }
+            case f: VFS if f.exists() => baseName + "." + renderMode
+            case f: VFS if !f.exists() => ""
+          }
           val template = engine.load(templatePath, lb.toList)
           engine.layout(template, context)
           throw new ScalateResult(buffer.toString,templateName)
