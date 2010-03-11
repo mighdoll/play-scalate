@@ -7,14 +7,14 @@ import play.data.validation.Validation
 import org.fusesource.scalate._
 import java.io.{StringWriter,PrintWriter}
 import scala.collection.JavaConversions._
-import java.io.File
+import java.io.{File,FileInputStream,ByteArrayOutputStream}
 import org.fusesource.scalate.util.SourceCodeHelper
 import play.vfs.{VirtualFile => VFS}
 
 private[mvc] trait ScalateProvider  {
 
   // Create and configure the Scalate template engine
-  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._" ):TemplateEngine = {
+  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
@@ -58,29 +58,23 @@ private[mvc] trait ScalateProvider  {
 
   }
 
-  //determine if we need to render with scalate
-  def shouldRenderWithScalate(template:String):Boolean = {
-    val ignore = Play.configuration.getProperty("scalate.ignore") 
-    if (Play.configuration.containsKey("scalate")) {
-      if (ignore != null) {
-         ignore.split(",").filter(template.startsWith(_)).size == 0
-      } else true
-    } else false 
-  }
-
-  def precompileTemplates = {
-    //do it for each template
-    // for (file <- VFS.list() if ( !(file.contains("default.ssp) || file.contains("default.scaml")) && (default.(file.contains (".ssp") || file.contains(".scaml"))) ) ) 
+  def precompileTemplates = walk (new File(Play.applicationPath,"/app/view")) ( (file: File) => {
+    val parser="<%@.*var(.*):.*%>".r
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
     //set layout
     context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
-    // open file & try to find context variables and set them
-    // populate playcotext
+    // open file & try to find context variables and initialize them
+    for ( contextVariable <- parser findAllIn readFileToString(file)) {
+       context.attributes(contextVariable) = null
+    }
+    // populate playcontext
     context.attributes("playcontext") = PlayContext
-    //val template = engine.load(file)
-    //engine.layout(template, context)
-  }
+    val template = engine.load(file.getPath)
+    engine.layout(template, context)
+  } )
+  
+  
 
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
@@ -142,7 +136,18 @@ private[mvc] trait ScalateProvider  {
     }
   }
   
-  def discardLeadingAt(templateName:String):String = {
+
+  //determine if we need to render with scalate
+private[this]  def shouldRenderWithScalate(template:String):Boolean = {
+    val ignore = Play.configuration.getProperty("scalate.ignore") 
+    if (Play.configuration.containsKey("scalate")) {
+      if (ignore != null) {
+         ignore.split(",").filter(template.startsWith(_)).size == 0
+      } else true
+    } else false 
+}
+
+private[this]  def discardLeadingAt(templateName:String):String = {
         if(templateName.startsWith("@")) {
             if(!templateName.contains(".")) {
                 determineURI(controller + "." + templateName.substring(1))
@@ -151,12 +156,12 @@ private[mvc] trait ScalateProvider  {
         } else templateName
   }
 
-  def determineURI(template:String = defaultTemplate):String = {
+private[this]  def determineURI(template:String = defaultTemplate):String = {
      template.replace(".", "/") + "." + 
      (if (requestFormat == null)  "html" else requestFormat)
   }
 
-private[mvc] def locateLayout(renderMode: String, otherMode: String="" ):String =  
+private[this] def locateLayout(renderMode: String, otherMode: String="" ):String =  
   VFS.search(Play.templatesPath, "/default." + renderMode) match {
       case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
           case null => ""
@@ -167,6 +172,37 @@ private[mvc] def locateLayout(renderMode: String, otherMode: String="" ):String 
       case f: VFS if !f.exists() => ""
     }
 
+private[this] def walk(file: File)(func: File=>Unit):Boolean = {
+    if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file)
+    if (file.isDirectory) for (i <- 0 until file.listFiles.length) walk(file.listFiles()(i))(func)
+    true
+}
+
+private[this] def readFileToString(f: File) = {
+    val bos = new ByteArrayOutputStream
+    val ba = new Array[Byte](2048)
+    val is = new FileInputStream(f)
+    val scanLines = if (Play.configuration.getProperty("scalate") != null) Play.configuration.getProperty("scalate").toInt else 20
+    var counter=0
+    def read {
+      if (counter != scanLines) {
+        is.read(ba) match {
+          case n if n < 0 =>
+            case 0 => read
+          case n => {
+            bos.write(ba, 0, n)
+            counter = counter + 1
+            read
+          }
+        }
+      }
+    }
+    read
+    is.close
+    bos.toString("UTF-8")
+  } 
 }
 private[mvc] object ScalateProvider extends ScalateProvider
+
+
 

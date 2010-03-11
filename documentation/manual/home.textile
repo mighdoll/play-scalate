@@ -45,18 +45,23 @@ bc. object Application extends ScalateController  {
     def index(name: String = "Guest user") = renderScalate(name)  //renderArgs("name",name) also works
 }
 
+the corresponding template could look something like this:
+
+bc. <%@ var name: String %>
+Hello ${name}
+
 if the method above is invoked, play will render app/views/Application/index.ssp with the following context variables already populated:
 * name
 * request
 * flash
 * session
 * parameters
-* utils (play.mvc.Utils)
 
-the corresponding template will look like this:
+and following packages will be imported by default:
+* models._
+* controllers._
+* play.utils._
 
-bc. <%@ var name: String %>
-Hello ${name}
 
 
 h3. precompile templates
