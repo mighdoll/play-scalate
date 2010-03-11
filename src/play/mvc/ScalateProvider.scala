@@ -7,7 +7,7 @@ import play.data.validation.Validation
 import org.fusesource.scalate._
 import java.io.{StringWriter,PrintWriter}
 import scala.collection.JavaConversions._
-import java.io.{File,FileInputStream,ByteArrayOutputStream}
+import java.io.{File,BufferedReader, FileReader}
 import org.fusesource.scalate.util.SourceCodeHelper
 import play.vfs.{VirtualFile => VFS}
 
@@ -58,21 +58,21 @@ private[mvc] trait ScalateProvider  {
 
   }
 
-  def precompileTemplates = walk (new File(Play.applicationPath,"/app/view")) ( (file: File) => {
+  def precompileTemplates = walk (new File(Play.applicationPath,"/app/view")) ( (filePath: String) => {
     val parser="<%@.*var(.*):.*%>".r
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
     //set layout
     context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
     // open file & try to find context variables and initialize them
-    for ( contextVariable <- parser findAllIn readFileToString(file)) {
+    for ( contextVariable <- parser findAllIn readFileToString(filePath)) {
        context.attributes(contextVariable) = null
     }
     // populate playcontext
     context.attributes("playcontext") = PlayContext
-    val template = engine.load(file.getPath)
+    val template = engine.load(filePath)
     engine.layout(template, context)
-  } )
+   } )
   
   
 
@@ -172,34 +172,25 @@ private[this] def locateLayout(renderMode: String, otherMode: String="" ):String
       case f: VFS if !f.exists() => ""
     }
 
-private[this] def walk(file: File)(func: File=>Unit):Boolean = {
-    if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file)
+private[this] def walk(file: File)(func: String=>Unit):Boolean = {
+    if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file.getPath)
     if (file.isDirectory) for (i <- 0 until file.listFiles.length) walk(file.listFiles()(i))(func)
     true
 }
 
-private[this] def readFileToString(f: File) = {
-    val bos = new ByteArrayOutputStream
-    val ba = new Array[Byte](2048)
-    val is = new FileInputStream(f)
+private[this] def readFileToString(filePath: String) = {
     val scanLines = if (Play.configuration.getProperty("scalate") != null) Play.configuration.getProperty("scalate").toInt else 20
     var counter=0
-    def read {
-      if (counter != scanLines) {
-        is.read(ba) match {
-          case n if n < 0 =>
-            case 0 => read
-          case n => {
-            bos.write(ba, 0, n)
-            counter = counter + 1
-            read
-          }
-        }
-      }
+    val reader = new BufferedReader(new FileReader(filePath))
+    var line: String = reader.readLine
+    val sb = new StringBuffer
+    while (line != null && counter != scanLines) {
+      sb.append(line)
+      counter = counter+1
+      line = reader.readLine()
     }
-    read
-    is.close
-    bos.toString("UTF-8")
+    reader.close()
+    sb.toString 
   } 
 }
 private[mvc] object ScalateProvider extends ScalateProvider
