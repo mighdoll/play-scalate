@@ -57,7 +57,7 @@ if the method above is invoked, play will render app/views/Application/index.ssp
 * session
 * parameters
 
-and following packages will be imported by default:
+and the following packages will be imported by default:
 * models._
 * controllers._
 * play.utils._
