@@ -13,6 +13,24 @@ if play_command == 'new':
     os.remove(os.path.join(application_path, 'app/views/Application/index.html'))
     os.remove(os.path.join(application_path, 'app/views/main.html'))
 
+# ~~~~~~~~~~~~~~~~~~~~~~ Precompile
+if play_command == 'scalate:precompile':
+    check_application()
+    load_modules()
+    do_classpath()
+    #add precompiled classes to classpath
+    cp_args += ":"+os.path.normpath(os.path.join(application_path,'tmp/classes'))
+    do_java()
+    if os.path.exists(os.path.join(application_path, 'tmp')):
+        shutil.rmtree(os.path.join(application_path, 'tmp'))
+    java_cmd.insert(2, '-Dprecompile=yes')
+    # replace last element with the console app
+    java_cmd[len(java_cmd)-1]="play.mvc.PreCompiler"
+    java_cmd.insert(2, '-Xmx256M -Xms32M')
+    subprocess.call(java_cmd, env=os.environ)
+    print
+    sys.exit(0)
+
 # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
 if play_command == 'ec' or play_command == 'eclipsify':
     dotProject = os.path.join(application_path, '.project')

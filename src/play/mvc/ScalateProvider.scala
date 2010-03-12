@@ -58,22 +58,27 @@ private[mvc] trait ScalateProvider  {
 
   }
 
-  def precompileTemplates = walk (new File(Play.applicationPath,"/app/view")) ( (filePath: String) => {
-    val parser="<%@.*var(.*):.*%>".r
+  private[this] val variableTagPattern="<%@.*var(.*):.*%>".r
+  private[this] val reggroup = "<%@[^>]*%>".r
+  def precompileTemplates = walk (new File(Play.applicationPath,"/app/views")) ( (filePath: String) => {
+    println("processing:"+filePath)
+    val f = new File(filePath)
+    println ("canRead?"+f.canRead)
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
     //set layout
     context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
     // open file & try to find context variables and initialize them
-    for ( contextVariable <- parser findAllIn readFileToString(filePath)) {
-       context.attributes(contextVariable) = null
+    for ( contextVariable <- reggroup findAllIn readFileToString(filePath)) {
+        val variableTagPattern(name) = contextVariable
+        println("setting context variable:"+name)
+        context.attributes(name) = null
     }
     // populate playcontext
     context.attributes("playcontext") = PlayContext
-    val template = engine.load(filePath)
-    engine.layout(template, context)
+    //compile template
+    engine.layout(engine.load(filePath), context)
    } )
-  
   
 
   //render with scalate
@@ -179,7 +184,7 @@ private[this] def walk(file: File)(func: String=>Unit):Boolean = {
 }
 
 private[this] def readFileToString(filePath: String) = {
-    val scanLines = if (Play.configuration.getProperty("scalate") != null) Play.configuration.getProperty("scalate").toInt else 20
+    val scanLines = if (Play.configuration.getProperty("scalate.linescanned") != null) Play.configuration.getProperty("scalate.linescanned").toInt else 20
     var counter=0
     val reader = new BufferedReader(new FileReader(filePath))
     var line: String = reader.readLine
