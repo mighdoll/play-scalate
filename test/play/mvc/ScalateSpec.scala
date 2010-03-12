@@ -13,7 +13,8 @@ class ScalateDummy extends ScalateProvider {
   override def requestFormat = "html"
   override def controller = "Application"
   override def validationErrors = null
-  override val engine = initEngine(false,false,"")
+  override val engine = initEngine(false,"")
+  override val Re = null
 }
 
 class ScalateSpec extends FlatSpec with ShouldMatchers {
@@ -24,7 +25,7 @@ class ScalateSpec extends FlatSpec with ShouldMatchers {
    
    Play.templatesPath = new LinkedList[VirtualFile]
    Play.templatesPath.add(VirtualFile.open(new File((new File(".")).getCanonicalPath+"/samples-and-tests/simpleapp/app/views")))
-     
+
    "A scalate template" should "render" in {
      val provider = new ScalateDummy
      try {

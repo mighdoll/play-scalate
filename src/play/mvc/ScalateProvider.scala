@@ -14,7 +14,7 @@ import play.vfs.{VirtualFile => VFS}
 private[mvc] trait ScalateProvider  {
 
   // Create and configure the Scalate template engine
-  def initEngine(useStandardWorkdir:Boolean = false, usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
+  def initEngine(usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
@@ -22,10 +22,7 @@ private[mvc] trait ScalateProvider  {
     )
     if (Play.mode == Play.Mode.PROD) engine.allowReload = false
 
-    engine.workingDirectory = if (Play.mode == Play.Mode.PROD && !useStandardWorkdir ) 
-        new File(System.getProperty("java.io.tmpdir"), "scalate")
-     else 
-       new File(Play.applicationPath,"/tmp")
+    engine.workingDirectory = new File(Play.applicationPath,"/tmp")
    
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
@@ -58,26 +55,30 @@ private[mvc] trait ScalateProvider  {
 
   }
 
-  private[this] val variableTagPattern="<%@.*var(.*):.*%>".r
-  private[this] val reggroup = "<%@[^>]*%>".r
+  private[this] def reggroup = "<%@[^>]*%>".r
+  val Re="<%@.*var(.*):.*%>".r
+
   def precompileTemplates = walk (new File(Play.applicationPath,"/app/views")) ( (filePath: String) => {
-    println("processing:"+filePath)
-    val f = new File(filePath)
-    println ("canRead?"+f.canRead)
+    val playPath = filePath.replace((new File(Play.applicationPath+"/app/views")).toString,"")
+    println("compiling: "+playPath+ " ...")
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
+    // populate playcontext
+    context.attributes("playcontext") = PlayContext
     //set layout
     context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
     // open file & try to find context variables and initialize them
-    for ( contextVariable <- reggroup findAllIn readFileToString(filePath)) {
-        val variableTagPattern(name) = contextVariable
-        println("setting context variable:"+name)
-        context.attributes(name) = null
-    }
-    // populate playcontext
-    context.attributes("playcontext") = PlayContext
+    for ( contextVariable <- reggroup findAllIn readFileToString(filePath)) 
+        contextVariable match {
+          case Re(key) => context.attributes(key.trim) = ""
+          case _=>
+        }
+    
     //compile template
-    engine.layout(engine.load(filePath), context)
+    val template = engine.load(playPath)
+    try {
+      engine.layout(template, context)
+    } catch {case  ex:ClassCastException => }
    } )
   
 
@@ -107,7 +108,6 @@ private[mvc] trait ScalateProvider  {
     
     // add the default layout to the context if it exists
     context.attributes("layout") = locateLayout(renderMode,otherMode) 
-
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
