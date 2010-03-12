@@ -62,13 +62,16 @@ and following packages will be imported by default:
 * controllers._
 * play.utils._
 
+p(note). This means that you will need to have at least one class in each of these packages, otherwise the template ca not be compiled
 
 
 h3. precompile templates
 
 bc. play scalate:precompile
 
-the command above will pregenerate all templates in the tmp folder
+the command above will pregenerate all templates into the tmp folder
+
+p(note). It's worth noting that by default the precompiler is scanning only the first 20 lines of each template for variable declaration (<%@ var %>
 
 h3. Difference between production and dev mode
 
