@@ -62,22 +62,22 @@ and the following packages will be imported by default:
 * controllers._
 * play.utils._
 
-p(note). This means that you will need to have at least one class in each of these packages, otherwise the template ca not be compiled
+p(note). This means that you will need to have at least one class in each of these packages, otherwise templates can not be compiled
 
 
-h3. precompile templates
+h3. Precompile templates
 
 bc. play scalate:precompile
 
 the command above will pregenerate all templates into the tmp folder
 
-p(note). It's worth noting that by default the precompiler is scanning only the first 20 lines of each template for variable declaration (<%@ var %>
+p(note). It's worth noting that by default the precompiler is scanning only the first 20 lines of each template for variable declaration (ie <%@ var %> )
 
 h3. Difference between production and dev mode
 
 in dev mode, play will alow instant template reloading, that is, if you make a change to a template and refresh the page, the change will apear. In production, however, template reloading is disabled for performance reasons.
 
-h3. layout
+h3. Layout
 
 scalate now supports "layouts, partials":http://scalate.fusesource.org/documentation/scalate-user-guide.html#layouts as well. Play stores default layouts in app/views/default.ssp (or app/views/default.scaml). 
 
@@ -98,3 +98,6 @@ this will resolve the full url
 bc. <%= staticurl("/public/images/favicon.png") %>
 
 this will resolve the full url for the favicon asset.
+
+h3. demo
+a sample application is bundled with the module and you can find it under samples-and-tests/simpleapp.

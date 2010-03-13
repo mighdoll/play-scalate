@@ -58,7 +58,8 @@ private[mvc] trait ScalateProvider  {
   private[this] def reggroup = "<%@[^>]*%>".r
   val Re="<%@.*var(.*):.*%>".r
 
-  def precompileTemplates = walk (new File(Play.applicationPath,"/app/views")) ( (filePath: String) => {
+  def precompileTemplates = walk (new File(Play.applicationPath,"/app/views")) {
+    (filePath: String) =>
     val playPath = filePath.replace((new File(Play.applicationPath+"/app/views")).toString,"")
     println("compiling: "+playPath+ " ...")
     val buffer = new StringWriter()
@@ -79,11 +80,11 @@ private[mvc] trait ScalateProvider  {
     try {
       engine.layout(template, context)
     } catch {case  ex:ClassCastException => }
-   } )
+   } 
   
 
   //render with scalate
-  def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) = {
+  def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) {
     val renderMode = Play.configuration.getProperty("scalate")
     val otherMode = renderMode match {
       case "ssp" => "scaml"
@@ -177,13 +178,13 @@ private[this] def locateLayout(renderMode: String, otherMode: String="" ):String
       case f: VFS if !f.exists() => ""
     }
 
-private[this] def walk(file: File)(func: String=>Unit):Boolean = {
+private[this] def walk(file: File) (func: (String) => Unit): Boolean = {
     if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file.getPath)
     if (file.isDirectory) for (i <- 0 until file.listFiles.length) walk(file.listFiles()(i))(func)
     true
 }
 
-private[this] def readFileToString(filePath: String) = {
+private[this] def readFileToString(filePath: String): String = {
     val scanLines = if (Play.configuration.getProperty("scalate.linescanned") != null) Play.configuration.getProperty("scalate.linescanned").toInt else 20
     var counter=0
     val reader = new BufferedReader(new FileReader(filePath))
