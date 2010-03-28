@@ -57,7 +57,7 @@
             </fileset>
         </copy>
         
-        <jar destfile="lib/play-scalate-0.2.jar" basedir="tmp/classes">
+        <jar destfile="lib/play-scalate-0.3.jar" basedir="tmp/classes">
             <manifest>
                 <section name="Play">
                     <attribute name="Specification-Title" value="Scala"/>
