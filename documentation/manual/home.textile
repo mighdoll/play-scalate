@@ -65,6 +65,13 @@ and the following packages will be imported by default:
 p(note). This means that you will need to have at least one class in each of these packages, otherwise templates can not be compiled
 
 
+h3. Intelligent error reporting
+
+Compilation and syntax related issues are reported in the browser the usual way:
+
+!images/scalate-error!
+
+
 h3. Precompile templates
 
 bc. play scalate:precompile
@@ -100,4 +107,5 @@ bc. <%= staticurl("/public/images/favicon.png") %>
 this will resolve the full url for the favicon asset.
 
 h3. demo
+
 a sample application is bundled with the module and you can find it under samples-and-tests/simpleapp.

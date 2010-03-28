@@ -8,9 +8,7 @@ object PreCompiler {
     //kick off precompiler
     val root = new File(System.getProperty("application.path"));
      Play.init(root, System.getProperty("play.id", ""));
-     println("~")
-     println("~ Precompiling scalate templates...")
-     println("~")
+     play.Logger.info("Precompiling scalate templates...")
      Play.start()
      ScalateProvider.precompileTemplates 
   }

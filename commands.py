@@ -8,6 +8,8 @@ if play_command == 'new':
     shutil.copyfile(os.path.join(module_dir,'resources/Model.scala'), os.path.join(application_path, 'app/models/Model.scala'))
     shutil.copyfile(os.path.join(module_dir,'resources/index.ssp'), os.path.join(application_path, 'app/views/Application/index.ssp'))
     shutil.copyfile(os.path.join(module_dir,'resources/default.ssp'), os.path.join(application_path, 'app/views/default.ssp'))
+    shutil.copyfile(os.path.join(module_dir,'resources/500.scaml'), os.path.join(application_path, 'app/views/errors/500.scaml'))
+    shutil.copyfile(os.path.join(module_dir,'resources/500.css'), os.path.join(application_path, 'public/stylesheets/500.css'))
     f = open(os.path.join(application_path, 'conf/application.conf'),'a')
     f.write('\n\n#scalate config\nscalate=ssp\njvm.memory=-Xmx256M -Xms32M')
     f.close()
@@ -15,6 +17,11 @@ if play_command == 'new':
     os.remove(os.path.join(application_path, 'app/views/main.html'))
 
 # ~~~~~~~~~~~~~~~~~~~~~~ Precompile
+if play_command == 'precompile':
+    # replace last element with the console app
+    java_cmd[len(java_cmd)-1]="play.mvc.PreCompiler"
+    java_cmd.insert(2, '-Xmx256M -Xms32M')
+
 if play_command == 'scalate:precompile':
     check_application()
     load_modules()
