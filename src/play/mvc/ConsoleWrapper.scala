@@ -8,7 +8,7 @@ class ConsoleWrapper(context:DefaultRenderContext) extends org.fusesource.scalat
   
   override def servletContext = null
   override def realPath(uri: String) = {
-    new File(Play.applicationPath+"/app/views/"+uri).toString
+    new File(Play.applicationPath,"/app/views/"+uri).toString
   }  
 
 }

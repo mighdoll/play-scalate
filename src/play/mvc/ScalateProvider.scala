@@ -29,6 +29,7 @@ private[mvc] trait ScalateProvider  {
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
     engine.combinedClassPath = true
+    engine.layoutStrategy = new layout.DefaultLayoutStrategy(engine,"/default.ssp", "/default.scaml") 
     if (usePlayClassloader) engine.classLoader = Play.classloader
     engine
   }
@@ -69,7 +70,6 @@ private[mvc] trait ScalateProvider  {
     // populate playcontext
     context.attributes("playcontext") = PlayContext
     //set layout
-    context.attributes("layout") = locateLayout(Play.configuration.getProperty("scalate"))
     // open file & try to find context variables and initialize them
     for ( contextVariable <- reggroup findAllIn readFileToString(filePath)) 
         contextVariable match {
@@ -92,10 +92,6 @@ private[mvc] trait ScalateProvider  {
   //render with scalate
   def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) {
     val renderMode = Play.configuration.getProperty("scalate")
-    val otherMode = renderMode match {
-      case "ssp" => "scaml"
-      case "scaml" => "ssp"
-    }
     //loading template
     val buffer = new StringWriter()
     var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
@@ -114,27 +110,21 @@ private[mvc] trait ScalateProvider  {
     }
     
     // add the default layout to the context if it exists
-    context.attributes("layout") = locateLayout(renderMode,otherMode) 
+    println("boo")
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
     
     try {
-          val baseName = templateName.replaceAll(".html", "")
-          val templatePath = VFS.search(Play.templatesPath, baseName + "." + renderMode) match {
-            case null => VFS.search(Play.templatesPath, baseName + "." + otherMode) match {
-              case null => ""
-              case f: VFS if f.exists() => baseName + "." + otherMode
-              case f: VFS if !f.exists() => ""
-            }
-            case f: VFS if f.exists() => baseName + "." + renderMode
-            case f: VFS if !f.exists() => ""
-          }
+          val baseName = templateName.replaceAll(".html", "."+renderMode)
+          val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString.replace(new File(Play.applicationPath+"/app/views").toString,"")
+          println(templatePath)
           engine.layout(engine.load(templatePath), context)
     } catch { 
         case ex:TemplateNotFoundException => {
           if(ex.isSourceAvailable) {
             throw ex
+
           }
           val element = PlayException.getInterestingStrackTraceElement(ex)
           if (element != null) {
@@ -177,16 +167,6 @@ private[this]  def determineURI(template:String = defaultTemplate):String = {
      (if (requestFormat == null)  "html" else requestFormat)
   }
 
-private[this] def locateLayout(renderMode: String, otherMode: String="" ):String =  
-  VFS.search(Play.templatesPath, "/default." + renderMode) match {
-      case null => VFS.search(Play.templatesPath, "/default." + otherMode) match {
-          case null => ""
-          case f: VFS if f.exists() => "/default." + otherMode
-          case f: VFS if !f.exists() => ""
-        }
-      case f: VFS if f.exists() => "/default." + renderMode
-      case f: VFS if !f.exists() => ""
-    }
 
 private[this] def walk(file: File) (func:String => Unit): Boolean = {
     if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file.getPath)

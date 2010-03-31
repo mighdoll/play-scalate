@@ -6,7 +6,7 @@ h3. Getting started
 
 first you need to grab the release from the modules repository:
 
-bc. play install scalate-0.2
+bc. play install scalate-0.3
 
 
 h3. Starting a New Project
@@ -15,7 +15,7 @@ then if you start a new project all you need to do is:
 
 bc. play new myapp --with scala,scalate
 
-(if you have any other version installed from scala or scalate than 0.1, then you will need to explicitly reference both ie. --with scalate-0.2,scala-0.1)
+(if you have any other version installed from scala or scalate than 0.1, then you will need to explicitly reference both ie. --with scalate-0.3,scala-0.1)
 
 p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
@@ -23,15 +23,26 @@ h3. Existing Projects
 
 or if you want to configure an existing scala project, you will need to edit your conf/application.conf:
 
-bc. module.scalate=${play.path}/modules/scalate-0.1
+bc. module.scalate=${play.path}/modules/scalate-0.3
 
-and set the dialect:
+set the dialect:
 
 bc. scalate=ssp
 
 or 
 
 bc. scalate=scaml
+
+create a layout file: 
+
+bc. touch <yourapp>/app/views/default.<ssp or scaml> 
+
+
+copy files for handling 500s: 
+
+bc. cp <scalate-module>/resources/500.scaml  <yourapp>/app/views/errors
+cp <scalate-module>/resources/500.css <yourapp>/public/stylesheets
+
 
 then you will also need to increase the heap size:
 

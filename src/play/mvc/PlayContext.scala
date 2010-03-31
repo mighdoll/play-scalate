@@ -26,7 +26,8 @@ private[mvc] object PlayContext {
      try{
        val im = collection.mutable.Map[String,AnyRef]()++=map.asInstanceOf[Map[String,AnyRef]]
        Router.reverse(uri,im).url
-     } catch {case ex:ClassCastException=> throw new ClassCastException("url tag takes a Map[String,AnyRef] as a second parameter")
+     } catch {
+       case ex: ClassCastException => throw new ClassCastException("url tag takes a Map[String,AnyRef] as a second parameter")
      }
    }
 }

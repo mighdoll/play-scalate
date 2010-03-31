@@ -1,9 +1,0 @@
-lib/play-scalate*.jar
-.DS_Store
-test-result
-tmp
-*.swp
-logs
-eclipse
-*.~*
-dist
