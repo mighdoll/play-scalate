@@ -29,7 +29,8 @@ private[mvc] trait ScalateProvider  {
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
     engine.combinedClassPath = true
-    engine.layoutStrategy = new layout.DefaultLayoutStrategy(engine,"/default.ssp", "/default.scaml") 
+    val renderMode = Play.configuration.getProperty("scalate")
+    engine.layoutStrategy = new layout.DefaultLayoutStrategy(engine,"/default."+renderMode) 
     if (usePlayClassloader) engine.classLoader = Play.classloader
     engine
   }
@@ -78,9 +79,8 @@ private[mvc] trait ScalateProvider  {
         }
     
     //compile template
-    val template = engine.load(playPath)
     try {
-      engine.layout(template, context)
+      engine.layout(engine.load(playPath), context)
     } catch {case  ex:ClassCastException => }
    } 
   
@@ -109,8 +109,6 @@ private[mvc] trait ScalateProvider  {
       for (pair <- renderArgs.data) context.attributes(pair._1) = pair._2
     }
     
-    // add the default layout to the context if it exists
-    println("boo")
     try {
        context.attributes("errors") = validationErrors
     } catch { case ex:Exception => throw new UnexpectedException(ex)}
@@ -118,7 +116,6 @@ private[mvc] trait ScalateProvider  {
     try {
           val baseName = templateName.replaceAll(".html", "."+renderMode)
           val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString.replace(new File(Play.applicationPath+"/app/views").toString,"")
-          println(templatePath)
           engine.layout(engine.load(templatePath), context)
     } catch { 
         case ex:TemplateNotFoundException => {

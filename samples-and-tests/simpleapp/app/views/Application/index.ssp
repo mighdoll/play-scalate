@@ -1,7 +1,7 @@
 <% attributes("title") = "This is the custom title" %>
 <%@ var name: String %> 
 <%@ var user2: User %> 
-<%@ var userlist: List[User] %> 
+<%@ va r userlist: List[User] %> 
 
 <h1>Hello ${name}!!!!</h1>
 <h1>Extra paramteter ${user2}!!!</h1>

@@ -85,7 +85,7 @@ Compilation and syntax related issues are reported in the browser the usual way:
 
 h3. Precompile templates
 
-bc. play scalate:precompile
+bc. play precompile
 
 the command above will pregenerate all templates into the tmp folder
 
