@@ -1,7 +1,7 @@
 # Scala
 import sys,os,inspect
 
-from framework.pym.utils import *
+from play.utils import *
 
 MODULE = 'scalate'
 
