@@ -49,5 +49,5 @@ def before(**kargs):
             shutil.rmtree(os.path.join(app.path, 'tmp'))
         # replace last element with the console app
         java_cmd[len(java_cmd)-1]="play.mvc.PreCompiler"
-        java_cmd.insert(2, '-Xmx256M -Xms32M')
+        java_cmd.insert(2, '-Xmx256M')
 
