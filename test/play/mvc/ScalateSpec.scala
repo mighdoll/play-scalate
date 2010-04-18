@@ -14,7 +14,6 @@ class ScalateDummy extends ScalateProvider {
   override def controller = "Application"
   override def validationErrors = null
   override val engine = initEngine(false,"")
-  override val Re = null
 }
 
 class ScalateSpec extends FlatSpec with ShouldMatchers {
@@ -29,7 +28,7 @@ class ScalateSpec extends FlatSpec with ShouldMatchers {
    "A scalate template" should "render" in {
      val provider = new ScalateDummy
      try {
-      provider.renderOrProvideTemplate(Array[AnyRef]())
+      provider.renderWithScalate(Array[AnyRef]())
      } catch {case res:ScalateResult => 
      }  
    }

@@ -7,12 +7,12 @@ import play.data.validation.Validation
 import org.fusesource.scalate._
 import org.fusesource.scalate.support.FileResourceLoader
 import java.io.{StringWriter,PrintWriter}
-import scala.collection.JavaConversions._
-import java.io.{File,BufferedReader, FileReader}
+import java.io.{File}
 import org.fusesource.scalate.util.SourceCodeHelper
 import play.vfs.{VirtualFile => VFS}
+import scala.collection.JavaConversions._
 
-private[mvc] trait ScalateProvider  {
+private[mvc] trait ScalateProvider {
 
   // Create and configure the Scalate template engine
   def initEngine(usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
@@ -27,7 +27,11 @@ private[mvc] trait ScalateProvider  {
     engine.workingDirectory = new File(Play.applicationPath,"/tmp")
    
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
-    engine.classpath = (new File(Play.applicationPath,"/tmp/classes")).toString
+    val classpathRoot = if (new File(Play.applicationPath,"/precompiled/java").exists && Play.mode == Play.Mode.PROD)
+                            new File(Play.applicationPath,"/precompiled/java").toString
+                        else
+                            new File(Play.applicationPath,"/tmp/classes").toString
+    engine.classpath = classpathRoot
     engine.combinedClassPath = true
     val renderMode = Play.configuration.getProperty("scalate")
     engine.layoutStrategy = new layout.DefaultLayoutStrategy(engine,"/default."+renderMode) 
@@ -41,7 +45,7 @@ private[mvc] trait ScalateProvider  {
   def validationErrors = Validation.errors
 
  
-  def renderOrProvideTemplate(args:Seq[AnyRef]):Option[String] = {
+  def renderWithScalate(args:Seq[Any]) {
     //determine template
     val templateName:String =
         if (args.length > 0 && args(0).isInstanceOf[String] && 
@@ -52,45 +56,19 @@ private[mvc] trait ScalateProvider  {
         }
     if (shouldRenderWithScalate(templateName)) {
       renderScalateTemplate(templateName,args)
-      None
     } else {
-      Some(templateName)
-    }  
-
+      throw new RuntimeException("could not find scalate template")
+    }
   }
 
-  private[this] def reggroup = "<%@[^>]*%>".r
-  val Re="<%@.*var(.*):.*%>".r
-
-  def precompileTemplates = walk (new File(Play.applicationPath,"/app/views")) {
-    (filePath: String) => 
-    val playPath = filePath.replace((new File(Play.applicationPath+"/app/views")).toString,"")
-    play.Logger.info("compiling: "+playPath+ " to:"+engine.workingDirectory+"/classes ...")
-    val buffer = new StringWriter()
-    var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
-    // populate playcontext
-    context.attributes("playcontext") = PlayContext
-    //set layout
-    // open file & try to find context variables and initialize them
-    for ( contextVariable <- reggroup findAllIn readFileToString(filePath)) 
-        contextVariable match {
-          case Re(key) => context.attributes(key.trim) = ""
-          case _=>
-        }
-    
-    //compile template
-    try {
-      engine.layout(engine.load(playPath), context)
-    } catch {case  ex:ClassCastException => }
-   } 
   
   
-  private[this] def errorTemplate:String = {
+  private def errorTemplate:String = {
     val fullPath = new File(Play.applicationPath,"/app/views/errors/500.scaml").toString 
     fullPath.replace(new File(Play.applicationPath+"/app/views").toString,"")
   }
-  //render with scalate
-  def renderScalateTemplate(templateName:String, args:Seq[AnyRef]) {
+  
+  private def renderScalateTemplate(templateName:String, args:Seq[Any]) {
     val renderMode = Play.configuration.getProperty("scalate")
     //loading template
     val buffer = new StringWriter()
@@ -132,16 +110,16 @@ private[mvc] trait ScalateProvider  {
         }  
         case ex:InvalidSyntaxException => handleSpecialError(context,ex)
         case ex:CompilerException => handleSpecialError(context,ex)
-    } finally throw new ScalateResult(buffer.toString,templateName)
+    } finally {throw new ScalateResult(buffer.toString,templateName) }
   }
   
-private[this] def handleSpecialError(context:DefaultRenderContext,ex:Exception) {
+private def handleSpecialError(context:DefaultRenderContext,ex:Exception) {
   context.attributes("javax.servlet.error.exception") = ex
   context.attributes("javax.servlet.error.message") = ex.getMessage
   engine.layout(engine.load(errorTemplate), context)
 }
   //determine if we need to render with scalate
-private[this]  def shouldRenderWithScalate(template:String):Boolean = {
+private def shouldRenderWithScalate(template:String):Boolean = {
     val ignore = Play.configuration.getProperty("scalate.ignore") 
     if (Play.configuration.containsKey("scalate")) {
       if (ignore != null) {
@@ -150,7 +128,7 @@ private[this]  def shouldRenderWithScalate(template:String):Boolean = {
     } else false 
 }
 
-private[this]  def discardLeadingAt(templateName:String):String = {
+private def discardLeadingAt(templateName:String):String = {
         if(templateName.startsWith("@")) {
             if(!templateName.contains(".")) {
                 determineURI(controller + "." + templateName.substring(1))
@@ -159,34 +137,9 @@ private[this]  def discardLeadingAt(templateName:String):String = {
         } else templateName
   }
 
-private[this]  def determineURI(template:String = defaultTemplate):String = {
+private def determineURI(template:String = defaultTemplate):String = {
      template.replace(".", "/") + "." + 
      (if (requestFormat == null)  "html" else requestFormat)
   }
 
-
-private[this] def walk(file: File) (func:String => Unit): Boolean = {
-    if (file.isFile  && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml") )  func(file.getPath)
-    if (file.isDirectory) for (i <- 0 until file.listFiles.length) walk(file.listFiles()(i))(func)
-    true
 }
-
-private[this] def readFileToString(filePath: String): String = {
-    val scanLines = if (Play.configuration.getProperty("scalate.linescanned") != null) Play.configuration.getProperty("scalate.linescanned").toInt else 20
-    var counter=0
-    val reader = new BufferedReader(new FileReader(filePath))
-    var line: String = reader.readLine
-    val sb = new StringBuffer
-    while (line != null && counter != scanLines) {
-      sb.append(line)
-      counter = counter+1
-      line = reader.readLine()
-    }
-    reader.close()
-    sb.toString 
-  } 
-}
-private[mvc] object ScalateProvider extends ScalateProvider
-
-
-

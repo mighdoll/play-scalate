@@ -1,7 +1,7 @@
 # Scala
-import sys,os,inspect
+import sys,os,inspect,subprocess
 
-from framework.pym.utils import *
+from play.utils import *
 
 MODULE = 'scalate'
 
@@ -44,10 +44,21 @@ def before(**kargs):
         app.check()
         java_cmd = app.java_cmd(args)
         #add precompiled classes to classpath
-        app.cp_args += ":"+os.path.normpath(os.path.join(app.path,'tmp/classes'))
         if os.path.exists(os.path.join(app.path, 'tmp')):
             shutil.rmtree(os.path.join(app.path, 'tmp'))
+        if os.path.exists(os.path.join(app.path, 'precompiled')):
+            shutil.rmtree(os.path.join(app.path, 'precompiled'))
         # replace last element with the console app
+        java_cmd[3]=java_cmd[3]+":"+os.path.normpath(os.path.join(app.path,'tmp/classes'))
         java_cmd[len(java_cmd)-1]="play.mvc.PreCompiler"
         java_cmd.insert(2, '-Xmx256M')
+        try:
+            subprocess.call(java_cmd, env=os.environ)
+        except OSError:
+            print "Could not execute the java executable, please make sure the JAVA_HOME environment variable is set properly (the java executable should reside at JAVA_HOME/bin/java). "
+            sys.exit(-1)
+        #copy classed to precompiled
+        shutil.copytree(os.path.join(app.path, 'tmp/classes'),os.path.join(app.path, 'precompiled/java'))
+        sys.exit(0)
+
 

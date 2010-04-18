@@ -5,6 +5,6 @@ import play.mvc._
 
 object Application extends ScalateController {
     
-    def index = renderScalate()
+    def index = render()
     
 }

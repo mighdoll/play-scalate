@@ -53,7 +53,7 @@ finally you will need to change your controllers to inherit from play.mvc.Scalat
 h3. Example
 
 bc. object Application extends ScalateController  {
-    def index(name: String = "Guest user") = renderScalate(name)  //renderArgs("name",name) also works
+    def index(name: String = "Guest user") = render(name)  //renderArgs("name",name) also works
 }
 
 the corresponding template could look something like this:
