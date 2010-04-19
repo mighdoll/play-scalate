@@ -25,7 +25,7 @@ or if you want to configure an existing scala project, you will need to edit you
 
 bc. module.scalate=${play.path}/modules/scalate-0.3
 
-set the dialect:
+then set scalate's dialect:
 
 bc. scalate=ssp
 
@@ -33,30 +33,29 @@ or
 
 bc. scalate=scaml
 
-create a layout file: 
-
-bc. touch <yourapp>/app/views/default.<ssp or scaml> 
-
-
-copy files for handling 500s: 
-
-bc. cp <scalate-module>/resources/500.scaml  <yourapp>/app/views/errors
-cp <scalate-module>/resources/500.css <yourapp>/public/stylesheets
-
-
 then you will also need to increase the heap size:
 
 bc. jvm.memory=-Xmx256M
 
-finally you will need to change your controllers to inherit from play.mvc.ScalateController
+afterwards create a default layout file: 
+
+bc. touch <yourapp>/app/views/default.<ssp or scaml> 
+
+copy files related to 500 errors: 
+
+bc. cp <scalate-module>/resources/500.scaml  <yourapp>/app/views/errors
+cp <scalate-module>/resources/500.css <yourapp>/public/stylesheets
+
+and finally you will need to change your controllers to inherit from play.mvc.ScalateController
 
 h3. Example
 
 bc. object Application extends ScalateController  {
-    def index(name: String = "Guest user") = render(name)  //renderArgs("name",name) also works
+    def index(name: String = "Guest user") = render(name)  //populating context parameters via renderArgs("name",name) is also working
 }
 
-the corresponding template could look something like this:
+
+the corresponding template (ie view/Application/index.ssp) could look something like this:
 
 bc. <%@ var name: String %>
 Hello ${name}
