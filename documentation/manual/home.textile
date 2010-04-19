@@ -15,7 +15,7 @@ then if you start a new project all you need to do is:
 
 bc. play new myapp --with scala,scalate
 
-(if you have any other version installed from scala or scalate than 0.1, then you will need to explicitly reference both ie. --with scalate-0.3,scala-0.1)
+(if you have any other version installed from scala or scalate than 0.3, then you will need to explicitly reference both ie. --with scalate-0.3,scala-0.3)
 
 p(note). the scalate module is depending on the scala module, so both modules need to be installed and activated 
 
@@ -46,7 +46,7 @@ cp <scalate-module>/resources/500.css <yourapp>/public/stylesheets
 
 then you will also need to increase the heap size:
 
-bc. jvm.memory=-Xmx256M -Xms32M
+bc. jvm.memory=-Xmx256M
 
 finally you will need to change your controllers to inherit from play.mvc.ScalateController
 
@@ -97,7 +97,7 @@ in dev mode, play will alow instant template reloading, that is, if you make a c
 
 h3. Layout
 
-scalate now supports "layouts, partials":http://scalate.fusesource.org/documentation/scalate-user-guide.html#layouts as well. Play stores default layouts in app/views/default.ssp (or app/views/default.scaml). 
+scalate now supports "layouts, partials":http://scalate.fusesource.org/documentation/user-guide.html#layouts as well. Play stores default layouts in app/views/default.ssp (or app/views/default.scaml). 
 
 h3. Reverse URL
 
