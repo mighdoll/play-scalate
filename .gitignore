@@ -1,0 +1,12 @@
+lib/play-scala.jar
+.DS_Store
+test-result
+tmp
+logs
+eclipse
+*.~*
+*.class
+dist
+*.pyc
+documentation/api
+.scala_dependencies
