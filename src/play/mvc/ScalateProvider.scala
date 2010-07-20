@@ -95,7 +95,7 @@ private[mvc] trait ScalateProvider {
           val baseName = templateName.replaceAll(".html", "."+renderMode)
           val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString.replace(new File(Play.applicationPath+"/app/views").toString,"")
           engine.layout(engine.load(templatePath), context)
-    } catch { 
+    } catch {
         case ex:TemplateNotFoundException => {
           if(ex.isSourceAvailable) {
             throw ex
@@ -110,6 +110,7 @@ private[mvc] trait ScalateProvider {
         }  
         case ex:InvalidSyntaxException => handleSpecialError(context,ex)
         case ex:CompilerException => handleSpecialError(context,ex)
+        case ex:Exception => handleSpecialError(context,ex)
     } finally {throw new ScalateResult(buffer.toString,templateName) }
   }
   
