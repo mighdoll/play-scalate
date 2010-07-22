@@ -50,7 +50,7 @@ def before(**kargs):
             shutil.rmtree(os.path.join(app.path, 'precompiled'))
         # replace last element with the console app
         java_cmd[3]=java_cmd[3]+":"+os.path.normpath(os.path.join(app.path,'tmp/classes'))
-        java_cmd[len(java_cmd)-1]="play.mvc.PreCompiler"
+        java_cmd[len(java_cmd)-1]="play.mvc.scalate.PreCompiler"
         java_cmd.insert(2, '-Xmx256M')
         try:
             subprocess.call(java_cmd, env=os.environ)

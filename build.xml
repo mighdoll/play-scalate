@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="Scalate" default="test" basedir=".">
+<project name="Scalate" default="build" basedir=".">
 
+    <property name="play.path" value="/opt/play" />
+	
     <path id="project.classpath">
         <pathelement path="${play.path}/framework/classes"/>
         <fileset dir="${play.path}/framework/lib">
@@ -10,39 +12,26 @@
         <fileset dir="lib">
             <include name="*.jar"/>                        
         </fileset> 
-        <pathelement path="tmp/testclasses"/>
         <pathelement path="tmp/classes"/>
     </path>
 
-		<target name="test" depends="clean,build,test-run" />
-		<target name="test-run">
-		    <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
-				      <classpath refid="project.classpath"/>
-				</taskdef>
-				<scalatest runpath="tmp/testclasses"  haltonfailure="true" />
-		</target>
 
     <target name="clean"> 
         <delete dir="tmp" />
-        <delete dir="samples-and-tests/simpleapp/tmp" />
-				<delete> <fileset dir="lib" includes="play-scalate*.jar"/> </delete>
-		</target>
+	<delete file="lib/play-scalate.jar"/>
+    </target>
 
-    <target name="build">
+    <target name="build" depends="clean">
         <taskdef resource="scala/tools/ant/antlib.xml">
             <classpath refid="project.classpath" />
         </taskdef>
         
         <mkdir dir="tmp/classes" />
-        <mkdir dir="tmp/testclasses" />
         
         <scalac srcdir="src" destdir="tmp/classes" force="changed">
             <classpath refid="project.classpath" />
 				</scalac>
 
-        <scalac srcdir="test" destdir="tmp/testclasses" force="changed">
-            <classpath refid="project.classpath" />
-				</scalac>
 
         <javac srcdir="src" destdir="tmp/classes" debug="true">
             <classpath refid="project.classpath" />
@@ -57,7 +46,7 @@
             </fileset>
         </copy>
         
-        <jar destfile="lib/play-scalate-0.7.1.jar" basedir="tmp/classes">
+        <jar destfile="lib/play-scalate.jar" basedir="tmp/classes">
             <manifest>
                 <section name="Play">
                     <attribute name="Specification-Title" value="Scala"/>
@@ -66,5 +55,40 @@
         </jar>
         
     </target>
-    
+
+     <target name="test" depends="build">
+	<echo message="Using ${play.path}/play" />
+	<delete dir="${basedir}/samples-and-tests/just-test-cases/tmp"/>
+	
+	<antcall target="play-test">
+            <param name="testAppPath" value="${basedir}/samples-and-tests/just-test-cases"/>
+        </antcall>
+
+  	 <echo message="*****************" />
+        <echo message="All test passed !" />
+        <echo message="*****************" />
+
+    </target>
+
+   <target name="play-test">
+        <echo message="${play.path}/play auto-test ${testAppPath} (wait)" />
+        <exec executable="${play.path}/play" failonerror="true">
+            <arg value="clean"/>
+            <arg value="${testAppPath}"/>
+        </exec>
+        <exec executable="${play.path}/play" failonerror="true">
+            <arg value="auto-test"/>
+            <arg value="${testAppPath}"/>
+        </exec>
+        <available file="${testAppPath}/test-result/result.passed" property="${testAppPath}testPassed" />
+        <fail message="Last test has failed ! (Check results in file://${testAppPath}/test-result)">
+            <condition>
+                <not>
+                    <isset property="${testAppPath}testPassed"/>
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+	
 </project>

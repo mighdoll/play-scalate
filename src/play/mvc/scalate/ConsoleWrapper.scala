@@ -1,4 +1,4 @@
-package play.mvc
+package play.mvc.scalate
 
 import java.io.File
 import org.fusesource.scalate._

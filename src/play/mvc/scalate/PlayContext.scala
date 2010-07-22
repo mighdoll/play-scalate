@@ -1,10 +1,11 @@
-package play.mvc
+package play.mvc.scalate
 import play.Play
 import scala.collection.JavaConversions._
+import play.mvc._
 
 
-private[mvc] object PlayContext {
-   def session = Scope.Session.current()
+object PlayContext {
+   def session =  Scope.Session.current()
    def request = Http.Request.current()
    def flash = Scope.Flash.current()
    def params = Scope.Params.current()

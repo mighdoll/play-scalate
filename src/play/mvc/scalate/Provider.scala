@@ -1,4 +1,4 @@
-package play.mvc
+package play.mvc.scalate
 
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesNamesTracer
 import play.Play
@@ -11,11 +11,28 @@ import java.io.{File}
 import org.fusesource.scalate.util.SourceCodeHelper
 import play.vfs.{VirtualFile => VFS}
 import scala.collection.JavaConversions._
+import play.mvc.results.ScalateResult
+import play.mvc.{Scope, Http}
 
-private[mvc] trait ScalateProvider {
-
+trait Provider {
+  
+  def renderWithScalate(args:Seq[Any]) {
+    //determine template
+    val templateName:String =
+        if (args.length > 0 && args(0).isInstanceOf[String] &&
+          LocalVariablesNamesTracer.getAllLocalVariableNames(args(0)).isEmpty) {
+          discardLeadingAt(args(0).toString)
+        } else {
+          determineURI()
+        }
+    if (shouldRenderWithScalate(templateName)) {
+      renderScalateTemplate(templateName,args)
+    } else {
+      throw new RuntimeException("could not find scalate template")
+    }
+  }
   // Create and configure the Scalate template engine
-  def initEngine(usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
+  private def initEngine(usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
     val engine = new TemplateEngine
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
@@ -39,27 +56,14 @@ private[mvc] trait ScalateProvider {
     engine
   }
   val engine = initEngine()
+  
   def defaultTemplate = Http.Request.current().action
   def requestFormat = Http.Request.current().format 
   def controller = Http.Request.current().controller
   def validationErrors = Validation.errors
 
  
-  def renderWithScalate(args:Seq[Any]) {
-    //determine template
-    val templateName:String =
-        if (args.length > 0 && args(0).isInstanceOf[String] && 
-          LocalVariablesNamesTracer.getAllLocalVariableNames(args(0)).isEmpty) {
-          discardLeadingAt(args(0).toString)
-        } else {
-          determineURI()
-        }
-    if (shouldRenderWithScalate(templateName)) {
-      renderScalateTemplate(templateName,args)
-    } else {
-      throw new RuntimeException("could not find scalate template")
-    }
-  }
+
 
   
   
@@ -142,5 +146,6 @@ private def determineURI(template:String = defaultTemplate):String = {
      template.replace(".", "/") + "." + 
      (if (requestFormat == null)  "html" else requestFormat)
   }
+
 
 }

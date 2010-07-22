@@ -1,4 +1,4 @@
-package play.mvc
+package play.mvc.scalate
 
 import play.Play
 import java.io._
@@ -19,7 +19,7 @@ object PreCompiler {
 
 }
 
-private class PrecompilerProvider extends ScalateProvider{
+private class PrecompilerProvider extends Provider{
   def reggroup = "<%@[^>]*%>".r
 
   val Re = "<%@.*var(.*):.*%>".r
