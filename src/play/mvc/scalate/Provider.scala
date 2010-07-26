@@ -121,7 +121,15 @@ trait Provider {
 private def handleSpecialError(context:DefaultRenderContext,ex:Exception) {
   context.attributes("javax.servlet.error.exception") = ex
   context.attributes("javax.servlet.error.message") = ex.getMessage
-  engine.layout(engine.load(errorTemplate), context)
+  try {
+    engine.layout(engine.load(errorTemplate), context)
+  } catch {
+    case ex:Exception =>
+      // TODO use logging API from Play here...
+      println("Caught: " + ex)
+      ex.printStackTrace
+
+  }
 }
   //determine if we need to render with scalate
 private def shouldRenderWithScalate(template:String):Boolean = {
