@@ -98,7 +98,7 @@ trait Provider {
     try {
           val baseName = templateName.replaceAll(".html", "."+renderMode)
           val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString.replace(new File(Play.applicationPath+"/app/views").toString,"")
-          engine.layout(engine.load(templatePath), context)
+          engine.layout(templatePath, context)
     } catch {
         case ex:TemplateNotFoundException => {
           if(ex.isSourceAvailable) {
