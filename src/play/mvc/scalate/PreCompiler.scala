@@ -19,15 +19,14 @@ object PreCompiler {
 
 }
 
-private class PrecompilerProvider extends Provider{
+class PrecompilerProvider extends Provider{
   def reggroup = "<%@[^>]*%>".r
 
   val Re = "<%@.*var(.*):.*%>".r
 
-  def precompileTemplates = walk(new File(Play.applicationPath, "/app/views")) {
-    (filePath: String) =>
+  val compile: String => Unit = (filePath: String) => {
       val playPath = filePath.replace((new File(Play.applicationPath + "/app/views")).toString, "")
-      play.Logger.info("compiling: " + playPath + " to:" + engine.workingDirectory + "/classes ...")
+      play.Logger.info("compiling: " + playPath + " to:" + engine.bytecodeDirectory + " ...")
       val buffer = new StringWriter()
       var context = new DefaultRenderContext(engine, new PrintWriter(buffer))
       // populate playcontext
@@ -46,6 +45,8 @@ private class PrecompilerProvider extends Provider{
         engine.layout(engine.load(playPath), context)
       } catch {case ex: ClassCastException =>}
   }
+
+  def precompileTemplates = walk(new File(Play.applicationPath, "/app/views"))(compile)
 
   def walk(file: File)(func: String => Unit): Boolean = {
     if (file.isFile && (file.getName.endsWith(".ssp") || file.getName.endsWith(".scaml")) && !file.getName.contains("default.ssp") && !file.getName.contains("default.scaml")) func(file.getPath)

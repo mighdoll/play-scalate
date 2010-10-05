@@ -31,9 +31,15 @@ trait Provider {
       throw new RuntimeException("could not find scalate template")
     }
   }
+
+  val bytecodeDirectory: Option[File] = None
+
   // Create and configure the Scalate template engine
   private def initEngine(usePlayClassloader:Boolean = true, customImports: String="import controllers._;import models._;import play.utils._" ):TemplateEngine = {
-    val engine = new TemplateEngine
+    val engine = new TemplateEngine {
+      override def bytecodeDirectory = 
+        Provider.this.bytecodeDirectory.getOrElse(super.bytecodeDirectory)
+    }
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
       Binding("playcontext", SourceCodeHelper.name(PlayContext.getClass), true)
@@ -42,7 +48,7 @@ trait Provider {
     if (Play.mode == Play.Mode.PROD && Play.configuration.getProperty("scalate.allowReloadInProduction") == null ) engine.allowReload = false
 
     engine.workingDirectory = new File(Play.applicationPath,"/tmp")
-   
+
     engine.resourceLoader = new FileResourceLoader(Some(new File(Play.applicationPath+"/app/views")))
     val classpathRoot = if (new File(Play.applicationPath,"/precompiled/java").exists && Play.mode == Play.Mode.PROD)
                             new File(Play.applicationPath,"/precompiled/java").toString
