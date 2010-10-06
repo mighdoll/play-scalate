@@ -13,6 +13,11 @@ package play.modules.scalate {
     }
 
     private lazy val pp = new PrecompilerProvider {
+
+      if(play.mvc.Router.lastLoading < 0){
+        play.mvc.Router.load("")
+      }
+
       import java.io.File
       override val bytecodeDirectory: Option[File] = 
         Some(new File(new File(Play.applicationPath, "/precompiled"), "java"))
