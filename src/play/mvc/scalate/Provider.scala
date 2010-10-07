@@ -16,17 +16,20 @@ import play.mvc.{Scope, Http}
 
 trait Provider {
   
-  def renderWithScalate(args:Seq[Any]) {
+  def renderWithScalate(templateName: String = null, args: Seq[Any] = Seq[Any]()){
     //determine template
-    val templateName:String =
-        if (args.length > 0 && args(0).isInstanceOf[String] &&
+    val _templateName:String =
+        if(templateName!=null){
+          templateName
+        }
+        else if (args.length > 0 && args(0).isInstanceOf[String] &&
           LocalVariablesNamesTracer.getAllLocalVariableNames(args(0)).isEmpty) {
           discardLeadingAt(args(0).toString)
         } else {
           determineURI()
         }
-    if (shouldRenderWithScalate(templateName)) {
-      renderScalateTemplate(templateName,args)
+    if (shouldRenderWithScalate(_templateName)) {
+      renderScalateTemplate(_templateName, args)
     } else {
       throw new RuntimeException("could not find scalate template")
     }
