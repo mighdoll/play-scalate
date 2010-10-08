@@ -40,9 +40,11 @@ trait Provider {
       override def bytecodeDirectory = 
         Provider.this.bytecodeDirectory.getOrElse(super.bytecodeDirectory)
     }
+
+    val playcontext = SourceCodeHelper.name(PlayContext.getClass).dropRight(1)+".type"
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true),
-      Binding("playcontext", SourceCodeHelper.name(PlayContext.getClass), true)
+      Binding("playcontext", playcontext, true)
     )
     engine.importStatements ++= List(customImports)
     if (Play.mode == Play.Mode.PROD && Play.configuration.getProperty("scalate.allowReloadInProduction") == null ) engine.allowReload = false
