@@ -34,15 +34,95 @@ object PlayContext {
 
    def url(uri:String, params: Any*):String = {
 
-    if(params.length == 1 && params(0).isInstanceOf[Map[_,_]]){
-      return urlmap(uri, params(0))
-    }
+     if(params.length == 1 && params(0).isInstanceOf[Map[_,_]]){
+       return urlmap(uri, params(0))
+     }
 
-    def isSimpleParam[X](typ: Class[X]): Boolean = {
-      classOf[Number].isAssignableFrom(typ) || 
-      typ.equals(classOf[String]) ||
-      typ.isPrimitive
-    }
+     findActionDefinition(uri, params:_*).url
+   }
+
+   def anchor(action: String)(body: => Any): String = 
+     anchor(action, Seq():_*)(body)
+
+   def anchor(action: String, params: Any*)(_body: => Any): String = {
+
+     val ad = findActionDefinition(action, params:_*)
+
+     val body = body2String(_body)
+
+     ad.method match {
+       case "POST" =>
+         val id = play.libs.Codec.UUID
+         val action = ad.url
+         val result = 
+         """<form method='POST'
+              id='%s'
+              style='display:none'
+              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' >%s</a>"""
+         result.format(id, action, id, body)
+
+       case "DELETE" =>
+         val id = play.libs.Codec.UUID
+         val action = ad.url + 
+                      (if(ad.url.indexOf("?")!= -1) "&" else "?") +
+                      "x-http-method-override=DELETE"
+         val result = 
+         """<form method='POST'
+              id='%s'
+              style='display:none'
+              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' >%s</a>"""
+         result.format(id, action, id, body)
+
+       case "GET" =>
+         "<a href='%s'>".format(ad.url)+body+"</a>"
+     }
+   } 
+
+   def form(_action: String)(_body: => Any): String = 
+     form(_action, Seq():_*)(_body)
+
+   def form(_action: String, params: Any*)(_body: => Any): String = {
+     val ad = findActionDefinition(_action, params:_*)
+
+     val body = body2String(_body)
+
+     val enctype = "application/x-www-form-urlencoded"
+     var method = ad.method
+     var action = ad.url
+
+     if ("GET" != method && "POST" != method){
+       action += 
+         (if(action.indexOf("?")!= -1) "&" else "?") + 
+         "x-http-method-override=%s".format(method)
+       method = "POST"
+     }
+
+     val result = 
+       """<form action="%s" 
+                method="%s"
+                accept-charset="utf-8"
+                enctype="%s">%s%s</form>""" 
+
+     import play.mvc.Scope.Session
+
+     val authenticityToken =
+       """<input type="hidden" name="authenticityToken" value="%s" />"""
+
+     result.format(action, 
+                   method, 
+                   enctype, 
+                   body, 
+                   authenticityToken.format(Session.current.get.getAuthenticityToken))
+   }
+
+   private def findActionDefinition(action: String, 
+                                    params: Any*): Router.ActionDefinition = {
+
+     def isSimpleParam[X](typ: Class[X]): Boolean = {
+       classOf[Number].isAssignableFrom(typ) || 
+       typ.equals(classOf[String]) ||
+       typ.isPrimitive
+     }
 
      import play.mvc.ActionInvoker
      import java.lang.reflect.Method
@@ -51,7 +131,6 @@ object PlayContext {
      import play.mvc.Router
      import play.data.binding.Unbinder
 
-     val action = uri
      try{
        val r = new java.util.HashMap[String, java.lang.Object]
        val actionMethod = ActionInvoker.getActionMethod(action)(1).asInstanceOf[Method]
@@ -77,7 +156,7 @@ object PlayContext {
          }
        }
 
-       Router.reverse(action, r).url
+       Router.reverse(action, r)
      } 
      catch {
        case ex: ClassCastException => 
@@ -85,5 +164,10 @@ object PlayContext {
      }
    }
 
+   private def body2String(body: Any): String =
+     if(body.isInstanceOf[Seq[_]])
+       body.asInstanceOf[Seq[_]].toSeq.mkString
+     else
+       body.toString 
 }
 
