@@ -34,7 +34,7 @@ object PlayContext {
 
    def url(uri:String, params: Any*):String = {
 
-    if(params.length == 1 && params.isInstanceOf[Map[_,_]]){
+    if(params.length == 1 && params(0).isInstanceOf[Map[_,_]]){
       return urlmap(uri, params(0))
     }
 
