@@ -23,7 +23,7 @@ object PlayContext {
      Router.reverse(uri,new java.util.HashMap[String,Object]()).url
    }
    //for some reason scalate can not understand generic types
-   def url(uri:String, map:Any):String = {
+   private def urlmap(uri:String, map:Any):String = {
      try{
        val im = collection.mutable.Map[String,AnyRef]()++=map.asInstanceOf[Map[String,AnyRef]]
        Router.reverse(uri,im).url
@@ -32,7 +32,11 @@ object PlayContext {
      }
    }
 
-   def url(uri:String, params:List[Any]):String = {
+   def url(uri:String, params: Any*):String = {
+
+    if(params.length == 1 && params.isInstanceOf[Map[_,_]]){
+      return urlmap(uri, params(0))
+    }
 
     def isSimpleParam[X](typ: Class[X]): Boolean = {
       classOf[Number].isAssignableFrom(typ) || 
