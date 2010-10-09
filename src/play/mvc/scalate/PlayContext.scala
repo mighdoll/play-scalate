@@ -41,10 +41,9 @@ object PlayContext {
      findActionDefinition(uri, params:_*).url
    }
 
-   def anchor(action: String)(body: => Any): String = 
-     anchor(action, Seq():_*)(body)
-
-   def anchor(action: String, params: Any*)(_body: => Any): String = {
+   def anchor(action: String, params: Any*)
+             (_body: Any)
+             (implicit attributes: Map[String, String] = Map.empty): String = {
 
      val ad = findActionDefinition(action, params:_*)
 
@@ -58,8 +57,8 @@ object PlayContext {
          """<form method='POST'
               id='%s'
               style='display:none'
-              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' >%s</a>"""
-         result.format(id, action, id, body)
+              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' %s>%s</a>"""
+         result.format(id, action, id, toAttribute(attributes), body)
 
        case "DELETE" =>
          val id = play.libs.Codec.UUID
@@ -70,18 +69,18 @@ object PlayContext {
          """<form method='POST'
               id='%s'
               style='display:none'
-              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' >%s</a>"""
-         result.format(id, action, id, body)
+              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' %s>%s</a>"""
+         result.format(id, action, id, toAttribute(attributes), body)
 
        case "GET" =>
-         "<a href='%s'>".format(ad.url)+body+"</a>"
+         "<a href='%s' %s>".format(ad.url, toAttribute(attributes))+body+"</a>"
      }
    } 
 
-   def form(_action: String)(_body: => Any): String = 
-     form(_action, Seq():_*)(_body)
+   def form(_action: String, params: Any*) 
+           (_body: Any)
+           (implicit attributes: Map[String, String] = Map.empty): String = {
 
-   def form(_action: String, params: Any*)(_body: => Any): String = {
      val ad = findActionDefinition(_action, params:_*)
 
      val body = body2String(_body)
@@ -101,7 +100,7 @@ object PlayContext {
        """<form action="%s" 
                 method="%s"
                 accept-charset="utf-8"
-                enctype="%s">%s%s</form>""" 
+                enctype="%s" %s>%s%s</form>""" 
 
      import play.mvc.Scope.Session
 
@@ -111,6 +110,7 @@ object PlayContext {
      result.format(action, 
                    method, 
                    enctype, 
+                   toAttribute(attributes),
                    body, 
                    authenticityToken.format(Session.current.get.getAuthenticityToken))
    }
@@ -169,5 +169,8 @@ object PlayContext {
        body.asInstanceOf[Seq[_]].toSeq.mkString
      else
        body.toString 
+
+   private def toAttribute(attributes: Map[String, String]): String =
+     attributes.map{case (k,v)=>k+"='"+v+"'"}.mkString(" ")
 }
 
