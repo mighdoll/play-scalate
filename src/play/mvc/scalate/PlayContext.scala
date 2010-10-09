@@ -42,48 +42,58 @@ object PlayContext {
    }
 
    def anchor(action: String, params: Any*)
-             (_body: Any)
-             (implicit attributes: Map[String, String] = Map.empty): String = {
+             (body: xml.NodeSeq)
+             (implicit attributes: Map[String, String] = Map.empty): xml.NodeSeq = {
 
      val ad = findActionDefinition(action, params:_*)
-
-     val body = body2String(_body)
 
      ad.method match {
        case "POST" =>
          val id = play.libs.Codec.UUID
-         val action = ad.url
-         val result = 
-         """<form method='POST'
-              id='%s'
+         val href="""javascript:document.getElementById("%s").submit();""".format(id)
+         <div>
+           <form method='POST'
+              id={id}
               style='display:none'
-              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' %s>%s</a>"""
-         result.format(id, action, id, toAttribute(attributes), body)
+              action={ad.url}></form>{
+                <a href={href}>{body}</a> %
+                  attributes.foldLeft(xml.Node.NoAttributes){
+                     case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+             }
+           }
+         </div>.child
 
        case "DELETE" =>
          val id = play.libs.Codec.UUID
+         val href="""javascript:document.getElementById("%s").submit();""".format(id)
          val action = ad.url + 
                       (if(ad.url.indexOf("?")!= -1) "&" else "?") +
                       "x-http-method-override=DELETE"
-         val result = 
-         """<form method='POST'
-              id='%s'
+         <div>
+           <form method='POST'
+              id={id}
               style='display:none'
-              action='%s'></form><a href='javascript:document.getElementById("%s").submit();' %s>%s</a>"""
-         result.format(id, action, id, toAttribute(attributes), body)
+              action={action}></form>{
+                <a href={href}>{body}</a> %
+                  attributes.foldLeft(xml.Node.NoAttributes){
+                     case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+             }
+           }
+         </div>.child
 
-       case "GET" =>
-         "<a href='%s' %s>".format(ad.url, toAttribute(attributes))+body+"</a>"
+       case "GET" => 
+         <a href={ad.url}>{body}</a> %
+         attributes.foldLeft(xml.Node.NoAttributes){
+           case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+         }
      }
    } 
 
    def form(_action: String, params: Any*) 
-           (_body: Any)
-           (implicit attributes: Map[String, String] = Map.empty): String = {
+           (body: xml.NodeSeq)
+           (implicit attributes: Map[String, String] = Map.empty):  xml.NodeSeq = {
 
      val ad = findActionDefinition(_action, params:_*)
-
-     val body = body2String(_body)
 
      val enctype = "application/x-www-form-urlencoded"
      var method = ad.method
@@ -96,23 +106,19 @@ object PlayContext {
        method = "POST"
      }
 
-     val result = 
-       """<form action="%s" 
-                method="%s"
-                accept-charset="utf-8"
-                enctype="%s" %s>%s%s</form>""" 
+     import play.mvc.Scope.Session 
+     val token = Session.current.get.getAuthenticityToken
 
-     import play.mvc.Scope.Session
-
-     val authenticityToken =
-       """<input type="hidden" name="authenticityToken" value="%s" />"""
-
-     result.format(action, 
-                   method, 
-                   enctype, 
-                   toAttribute(attributes),
-                   body, 
-                   authenticityToken.format(Session.current.get.getAuthenticityToken))
+     <form action={action}
+           method={method}
+           accept-charset="utf-8"
+           enctype={enctype}>{
+         body ++ <input type="hidden" name="authenticityToken" value={token} />
+       }
+     </form> % 
+     attributes.foldLeft(xml.Node.NoAttributes){
+       case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+     }
    }
 
    private def findActionDefinition(action: String, 
@@ -164,13 +170,6 @@ object PlayContext {
      }
    }
 
-   private def body2String(body: Any): String =
-     if(body.isInstanceOf[Seq[_]])
-       body.asInstanceOf[Seq[_]].toSeq.mkString
-     else
-       body.toString 
-
-   private def toAttribute(attributes: Map[String, String]): String =
-     attributes.map{case (k,v)=>k+"='"+v+"'"}.mkString(" ")
+   implicit def str2xml(x: String) = xml.Text(x)
 }
 
