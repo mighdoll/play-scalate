@@ -21,9 +21,9 @@ package play.modules.scalate {
       import java.io.File
       override val bytecodeDirectory: Option[File] = 
         Some(new File(new File(Play.applicationPath, "/precompiled"), "java"))
-    }
 
-    private lazy val suffix: List[String] = List(".scaml", ".ssp", ".mustache")
+      val suffix = engine.codeGenerators.keys
+    }
 
     private def templateFactory(file: VirtualFile): Template = new Template() {
       this.name = file.getName
@@ -37,7 +37,7 @@ package play.modules.scalate {
         case null => null
         case _ => 
           val name = file.getName
-          suffix.find(name.endsWith) match{
+          pp.suffix.find(name.endsWith) match{
             case Some(_) => templateFactory(file)
             case _ => null
          }
