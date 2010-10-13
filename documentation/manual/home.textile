@@ -124,14 +124,15 @@ h3. Generating Anchor Tag
 
 bc. <%= anchor("Application.index") %>
 
-this will give back the anchor tag to the index page.
+this will genrate the anchor tag to the index page.
 
 bc. <%= anchor("Application.something", 5) %>
 
 this will generate the anchor tag with a URL corresponding to a specified route.
-Note that an form tag will be also generated if the route has POST or DELETE command type.
+Note that an form tag will be also generated if the route has POST or DELETE command.
 
 bc. <%= anchor("Application.something", 5)(Map("class"=>"name")) %>
+
 this will generate the anchor tag with a URL corresponding to a specified route, and
 the generated anchor tag will have attributes specified as a map.
 
@@ -144,6 +145,7 @@ and the second parameter(typed as xml.NodeSeq) will become children of it.
 
 
 bc. <%= form("Application.something", 5){ <input type="text" name="name" /> }(Map("class"=>"name")) %>
+
 this will generate the form tag with a URL corresponding to a specified route, and
 the generated form tag will have attributes specified as a map.
 
