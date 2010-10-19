@@ -34,15 +34,101 @@ object PlayContext {
 
    def url(uri:String, params: Any*):String = {
 
-    if(params.length == 1 && params(0).isInstanceOf[Map[_,_]]){
-      return urlmap(uri, params(0))
-    }
+     if(params.length == 1 && params(0).isInstanceOf[Map[_,_]]){
+       return urlmap(uri, params(0))
+     }
 
-    def isSimpleParam[X](typ: Class[X]): Boolean = {
-      classOf[Number].isAssignableFrom(typ) || 
-      typ.equals(classOf[String]) ||
-      typ.isPrimitive
-    }
+     findActionDefinition(uri, params:_*).url
+   }
+
+   def anchor(action: String, params: Any*)
+             (body: xml.NodeSeq)
+             (implicit attributes: Map[String, String] = Map.empty): xml.NodeSeq = {
+
+     val ad = findActionDefinition(action, params:_*)
+
+     ad.method match {
+       case "POST" =>
+         val id = play.libs.Codec.UUID
+         val href="""javascript:document.getElementById("%s").submit();""".format(id)
+         <div>
+           <form method='POST'
+              id={id}
+              style='display:none'
+              action={ad.url}></form>{
+                <a href={href}>{body}</a> %
+                  attributes.foldLeft(xml.Node.NoAttributes){
+                     case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+             }
+           }
+         </div>.child
+
+       case "DELETE" =>
+         val id = play.libs.Codec.UUID
+         val href="""javascript:document.getElementById("%s").submit();""".format(id)
+         val action = ad.url + 
+                      (if(ad.url.indexOf("?")!= -1) "&" else "?") +
+                      "x-http-method-override=DELETE"
+         <div>
+           <form method='POST'
+              id={id}
+              style='display:none'
+              action={action}></form>{
+                <a href={href}>{body}</a> %
+                  attributes.foldLeft(xml.Node.NoAttributes){
+                     case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+             }
+           }
+         </div>.child
+
+       case "GET" => 
+         <a href={ad.url}>{body}</a> %
+         attributes.foldLeft(xml.Node.NoAttributes){
+           case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+         }
+     }
+   } 
+
+   def form(_action: String, params: Any*) 
+           (body: xml.NodeSeq)
+           (implicit attributes: Map[String, String] = Map.empty):  xml.NodeSeq = {
+
+     val ad = findActionDefinition(_action, params:_*)
+
+     val enctype = "application/x-www-form-urlencoded"
+     var method = ad.method
+     var action = ad.url
+
+     if ("GET" != method && "POST" != method){
+       action += 
+         (if(action.indexOf("?")!= -1) "&" else "?") + 
+         "x-http-method-override=%s".format(method)
+       method = "POST"
+     }
+
+     import play.mvc.Scope.Session 
+     val token = Session.current.get.getAuthenticityToken
+
+     <form action={action}
+           method={method}
+           accept-charset="utf-8"
+           enctype={enctype}>{
+         body ++ <input type="hidden" name="authenticityToken" value={token} />
+       }
+     </form> % 
+     attributes.foldLeft(xml.Node.NoAttributes){
+       case (attr, (k, v)) => new xml.UnprefixedAttribute(k, v, attr)
+     }
+   }
+
+   private def findActionDefinition(action: String, 
+                                    params: Any*): Router.ActionDefinition = {
+
+     def isSimpleParam[X](typ: Class[X]): Boolean = {
+       classOf[Number].isAssignableFrom(typ) || 
+       typ.equals(classOf[String]) ||
+       typ.isPrimitive
+     }
 
      import play.mvc.ActionInvoker
      import java.lang.reflect.Method
@@ -51,7 +137,6 @@ object PlayContext {
      import play.mvc.Router
      import play.data.binding.Unbinder
 
-     val action = uri
      try{
        val r = new java.util.HashMap[String, java.lang.Object]
        val actionMethod = ActionInvoker.getActionMethod(action)(1).asInstanceOf[Method]
@@ -77,7 +162,7 @@ object PlayContext {
          }
        }
 
-       Router.reverse(action, r).url
+       Router.reverse(action, r)
      } 
      catch {
        case ex: ClassCastException => 
@@ -85,5 +170,6 @@ object PlayContext {
      }
    }
 
+   implicit def str2xml(x: String) = xml.Text(x)
 }
 

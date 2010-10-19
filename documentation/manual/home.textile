@@ -90,7 +90,7 @@ h3. Precompile templates
 
 bc. play precompile
 
-the command above will pregenerate all templates into the tmp folder
+the command above will pregenerate all templates into the precompiled folder
 
 p(note). It's worth noting that by default the precompiler is scanning only the first 20 lines of each template for variable declaration (ie <%@ var %> )
 
@@ -108,9 +108,9 @@ bc. <%= url("Application.index") %>
 
 this will give back the index page 
 
-bc. <%= url("Application.something", Map("id"->5)) %>
+bc. <%= url("Application.something", 5) %>
 
-this will resolve method "Application#something" with argument "id" 
+this will resolve method "Application#something" with parameter "5" 
 
 bc. <%= absoluteurl("Application.index") %>
 
@@ -119,6 +119,36 @@ this will resolve the full url
 bc. <%= staticurl("/public/images/favicon.png") %>
 
 this will resolve the full url for the favicon asset.
+
+h3. Generating Anchor Tag
+
+bc. <%= anchor("Application.index") %>
+
+this will genrate the anchor tag to the index page.
+
+bc. <%= anchor("Application.something", 5) %>
+
+this will generate the anchor tag with a URL corresponding to a specified route.
+Note that an form tag will be also generated if the route has POST or DELETE command.
+
+bc. <%= anchor("Application.something", 5)(Map("class"->"name")) %>
+
+this will generate the anchor tag with a URL corresponding to a specified route, and
+the generated anchor tag will have attributes specified as a map.
+
+h3. Generating Form Tag
+
+bc. <%= form("Application.something", 5){ <input type="text" name="name" /> } %>
+
+this will generate the form tag with a URL corresponding to a specified route,
+and the second parameter(typed as xml.NodeSeq) will become children of it.
+
+
+bc. <%= form("Application.something", 5){ <input type="text" name="name" /> }(Map("class"->"name")) %>
+
+this will generate the form tag with a URL corresponding to a specified route, and
+the generated form tag will have attributes specified as a map.
+
 
 h3. demo
 

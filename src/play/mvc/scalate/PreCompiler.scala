@@ -42,7 +42,7 @@ class PrecompilerProvider extends Provider{
        context.attributes("javax.servlet.error.message") = ""
       //compile template
       try {
-        engine.layout(engine.load(playPath), context)
+        engine.load(playPath)
       } catch {case ex: ClassCastException =>}
   }
 
